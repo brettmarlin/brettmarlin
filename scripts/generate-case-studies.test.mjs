@@ -410,35 +410,7 @@ test('a study with no full-bleed first beat is unchanged and gets no hero', () =
   assert.equal(JSON.stringify(study), before);
 });
 
-test('the page hero is eagerly loaded, never lazy', () => {
-  const src = readFileSync(new URL('../src/pages/CaseStudyDetail.tsx', import.meta.url), 'utf8');
-  const section = /study\.hero && study\.hero\.kind === 'image'[\s\S]*?<\/section>/.exec(src)?.[0];
-  assert.ok(section, 'hero section not found');
-  const heroImg = [...section.matchAll(/<img[\s\S]*?\/>/g)]
-    .map((m) => m[0])
-    .find((el) => /alt=\{study\.hero\.alt\}/.test(el));
-  assert.ok(heroImg, 'hero img element not found');
-  assert.match(heroImg, /loading="eager"/);
-  assert.match(heroImg, /fetchPriority="high"/);
-  assert.doesNotMatch(heroImg, /loading="lazy"/);
-});
 
-test('the hero backdrop is sampled edge color, not a blurred second copy', () => {
-  // The blurred-copy backdrop smeared color past the edges of what the
-  // sharp image shows — visible on the Figma heroes, gone 2026-08-16 in
-  // favor of per-side hexes sampled at generate time, spanned as a
-  // gradient (flat when the sides agree). One hero, one img element; the
-  // sampled backdrop rides inline with bg-inverse as the class-level
-  // fallback when nothing was sampled.
-  const src = readFileSync(new URL('../src/pages/CaseStudyDetail.tsx', import.meta.url), 'utf8');
-  const section = /study\.hero && study\.hero\.kind === 'image'[\s\S]*?<\/section>/.exec(src)?.[0];
-  assert.ok(section, 'hero section not found');
-  assert.equal([...section.matchAll(/<img/g)].length, 1, 'one hero, one img — no backdrop copy');
-  assert.doesNotMatch(section, /blur/);
-  assert.match(section, /study\.hero\.edgeColors \?/);
-  assert.match(section, /linear-gradient\(to right, \$\{study\.hero\.edgeColors\.left\}, \$\{study\.hero\.edgeColors\.right\}\)/);
-  assert.match(section, /bg-inverse/, 'the token background stays as the no-color fallback');
-});
 
 test('YouTube URL parsing across every listed shape', () => {
   assert.deepEqual(parseYouTubeUrl('https://www.youtube.com/watch?v=5oBvOFS5k0A&t=47s'), { videoId: '5oBvOFS5k0A', start: 47 });
@@ -526,28 +498,7 @@ test('a beat with two videos keeps both', () => {
   assert.deepEqual(beats[0].media.map((m) => m.videoId), ['aaaaaaaaaaa', 'bbbbbbbbbbb']);
 });
 
-test('the video facade keeps the YouTube player unloaded before activation', () => {
-  const src = readFileSync(new URL('../src/components/BeatVideo.tsx', import.meta.url), 'utf8');
-  // The iframe lives only in the early-return playing branch. The poster
-  // branch may load YouTube's thumbnail when the vault explicitly requests
-  // it, but never loads the player, script, or iframe.
-  const playingBranch = src.slice(src.indexOf('if (playing)'), src.indexOf('return (', src.indexOf('if (playing)') + 20));
-  const posterBranch = src.slice(src.lastIndexOf('return ('));
-  assert.match(src, /youtube-nocookie\.com\/embed/);
-  assert.doesNotMatch(posterBranch, /<iframe/);
-  assert.ok(src.indexOf('<iframe') < src.lastIndexOf('return ('), 'iframe must be confined to the playing branch');
-  assert.match(playingBranch + src.slice(src.indexOf('if (playing)')), /allowFullScreen/);
-  assert.match(src, /title=\{`\$\{heading\} video`\}/);
-});
 
-test('the play control is a real button with an accessible name', () => {
-  const src = readFileSync(new URL('../src/components/BeatVideo.tsx', import.meta.url), 'utf8');
-  const btn = src.slice(src.indexOf('<button'), src.indexOf('</button>'));
-  assert.ok(btn.length > 0, 'no button element found');
-  assert.match(btn, /type="button"/);
-  assert.match(btn, /aria-label=\{`Play video: \$\{heading\}`\}/);
-  assert.match(btn, /focus-visible:ring/);
-});
 
 test('a beats section in a gated take never enters the collected output', () => {
   const md = FM + '## Take — recipient-named\n_clearance: gated · site_visibility: recipient-only_\n\n### Beats\n\n#### Secret beat\nGated prose.\n';
@@ -664,4 +615,52 @@ test('an unrelated image whose name merely starts similarly is kept', () => {
   const kept = withoutStaleHeroes([u('00-hero.aaaaaaaa.jpg'), u('00-hero-detail.jpg')], '00-hero.aaaaaaaa.jpg')
     .map((x) => x.split('/').pop());
   assert.deepEqual(kept, ['00-hero.aaaaaaaa.jpg', '00-hero-detail.jpg']);
+});
+
+
+// --- the rendering side, re-pinned on the redesign's components ---------------
+// The generator's contract with the page: the hero is the LCP and loads
+// eagerly; its backdrop is the sampled edge colour, never a blurred copy; a
+// video beat stays a poster until the visitor asks for the player.
+
+test('the page hero is eagerly loaded, never lazy', () => {
+  const view = readFileSync(new URL('../src/components/CaseStudyView.tsx', import.meta.url), 'utf8');
+  const heroBlock = /hero \? \([\s\S]*?<\/motion\.div>\s*\) : null/.exec(view)?.[0];
+  assert.ok(heroBlock, 'hero block not found');
+  assert.match(heroBlock, /<Picture[\s\S]*?\beager\b/, 'the hero Picture is marked eager');
+  const picture = readFileSync(new URL('../src/components/Picture.tsx', import.meta.url), 'utf8');
+  assert.match(picture, /loading=\{eager \? 'eager' : 'lazy'\}/);
+  assert.match(picture, /fetchpriority: 'high'/);
+});
+
+test('the hero backdrop is sampled edge color, not a blurred second copy', () => {
+  const view = readFileSync(new URL('../src/components/CaseStudyView.tsx', import.meta.url), 'utf8');
+  assert.doesNotMatch(view, /blur\(/);
+  assert.match(view, /hero\?\.edgeColors\s*\?/);
+  assert.match(view, /linear-gradient\(90deg, \$\{hero\.edgeColors\.left\}, \$\{hero\.edgeColors\.right\}\)/);
+  assert.match(view, /'var\(--paper-2\)'/, 'the token surface stays as the no-colour fallback');
+  const heroBlock = /hero \? \([\s\S]*?<\/motion\.div>\s*\) : null/.exec(view)?.[0] ?? '';
+  assert.equal([...heroBlock.matchAll(/<Picture/g)].length, 1, 'one hero, one image, no backdrop copy');
+});
+
+test('the video facade keeps the YouTube player unloaded before activation', () => {
+  const view = readFileSync(new URL('../src/components/CaseStudyView.tsx', import.meta.url), 'utf8');
+  const facade = view.slice(view.indexOf('function VideoFacade'), view.indexOf('export function Prose'));
+  assert.ok(facade.length > 0, 'VideoFacade not found');
+  assert.match(facade, /youtube-nocookie\.com\/embed/);
+  const [before, after] = facade.split('{on ? (');
+  assert.doesNotMatch(before, /<iframe/, 'no iframe before the branch');
+  const [playing, poster] = after.split(') : (');
+  assert.match(playing, /<iframe/);
+  assert.match(playing, /allowFullScreen/);
+  assert.doesNotMatch(poster, /<iframe/, 'the poster branch never loads the player');
+});
+
+test('the play control is a real button with an accessible name', () => {
+  const view = readFileSync(new URL('../src/components/CaseStudyView.tsx', import.meta.url), 'utf8');
+  const facade = view.slice(view.indexOf('function VideoFacade'), view.indexOf('export function Prose'));
+  const btn = facade.slice(facade.indexOf('<button'), facade.indexOf('</button>'));
+  assert.ok(btn.length > 0, 'no button element found');
+  assert.match(btn, /type="button"/);
+  assert.match(btn, /aria-label=\{`Play \$\{m\.poster\.alt\}`\}/);
 });
