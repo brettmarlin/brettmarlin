@@ -13,6 +13,7 @@ export function Work() {
   const { tag: tagParam } = useParams();
   const navigate = useNavigate();
   const tag = tagParam ? tagFromSlug(tagParam) : undefined;
+  const [allTags, setAllTags] = useState(false);
   const [view, setView] = useState<View>(() => { try { return (localStorage.getItem('bm-work-view') as View) || 'list'; } catch { return 'list'; } });
   const setViewPersist = (v: View) => { setView(v); try { localStorage.setItem('bm-work-view', v); } catch { /* ignore */ } };
   const list = useMemo(() => (tag ? studies.filter((s) => s.tags.includes(tag)) : studies), [tag]);
@@ -32,9 +33,10 @@ export function Work() {
       <div className="work-toolbar">
         <div className="chips" role="group" aria-label="Filter by discipline">
           <Link to="/work" className={`chip ${!tag ? 'on' : ''}`}>All {studies.length}</Link>
-          {tags.map((t) => (
+          {tags.filter((t, i) => allTags || i < 10 || t.id === tag).map((t) => (
             <Link key={t.id} to={`/work/tag/${tagSlug(t.id)}`} className={`chip ${tag === t.id ? 'on' : ''}`}>{tagLabel(t.id)} {t.count}</Link>
           ))}
+          {tags.length > 10 ? <button type="button" className="chip" onClick={() => setAllTags((v) => !v)} aria-expanded={allTags}>{allTags ? 'Fewer' : `+${tags.length - 10} more`}</button> : null}
         </div>
         <div className="view-switch" role="group" aria-label="View">
           <button type="button" className={`label ${view === 'list' ? 'on' : ''}`} onClick={() => setViewPersist('list')} aria-pressed={view === 'list'}><Rows size={14} /> List</button>

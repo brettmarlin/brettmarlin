@@ -8,6 +8,7 @@ import { findStudy, nextStudy, prevStudy, type CaseStudy as Study } from '../lib
 import { fetchStudyGate, unlockStudy, session, studyPasswordKey } from '../lib/api';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
 import { EASE } from '../lib/motion';
+import { capture } from '../lib/analytics';
 
 type GateState = 'idle' | 'checking' | 'wrong' | 'limited' | 'error' | 'ok';
 
@@ -44,6 +45,7 @@ export function CaseStudy() {
     setState('checking');
     const r = await unlockStudy(study.slug, password);
     if (r.status === 'ok') {
+      capture('study_unlocked', { slug: study.slug });
       session.set(studyPasswordKey(study.slug), password);
       setState('ok');
       setVia(r.via.company);

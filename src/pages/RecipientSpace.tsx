@@ -13,6 +13,7 @@ import { formatDate } from '../lib/dates';
 import { SITE } from '../lib/config';
 import { EASE } from '../lib/motion';
 import { useDocumentTitle, useNoIndex } from '../hooks/useDocumentTitle';
+import { capture } from '../lib/analytics';
 
 type GateState = 'idle' | 'checking' | 'wrong' | 'limited' | 'error' | 'ok';
 
@@ -39,6 +40,7 @@ function useRecipient(slug: string, preview?: RecipientPayload) {
     fetchRecipient(slug, remembered, ctrl.signal).then((r) => {
       if (ctrl.signal.aborted) return;
       if (remembered && (r.status === 'bad-password' || r.status === 'password')) session.clear(recipientPasswordKey(slug));
+      capture(r.status === 'ok' ? 'recipient_space_opened' : r.status === 'password' ? 'recipient_gate_landing' : `recipient_${r.status.replace(/-/g, '_')}`, { slug });
       setState(fromResult(r, 'idle'));
     });
     return () => ctrl.abort();
@@ -48,6 +50,7 @@ function useRecipient(slug: string, preview?: RecipientPayload) {
     setState((s) => (s.kind === 'gate' ? { ...s, gate: 'checking' } : s));
     const r = await fetchRecipient(slug, password);
     if (r.status === 'ok') {
+      capture('recipient_unlocked', { slug });
       session.set(recipientPasswordKey(slug), password);
       setState((s) => (s.kind === 'gate' ? { ...s, gate: 'ok' } : s));
       setTimeout(() => setState({ kind: 'ready', data: r.data }), 700);

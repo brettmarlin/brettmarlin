@@ -46,3 +46,12 @@ export function recipientMarkdown(r: RecipientRecord): string {
 export function wordCount(s: string): number {
   return s.trim() ? s.trim().split(/\s+/).length : 0;
 }
+
+/** The recipients/<slug>.payload.json shape the vault publisher sends: what
+ *  the page renders and nothing that governs access. */
+export function payloadJson(r: RecipientRecord): string {
+  const { slug, status, has_password, notes, jd, role, password_set, ...rest } = r;
+  void slug; void status; void has_password; void notes; void jd; void role; void password_set;
+  const picks = r.picks.map((p) => ({ case_study: p.case_study, ...(p.take ? { take: p.take } : {}), framing: p.framing, ...(p.gated ? { gated: true } : {}), ...(p.study ? { study: p.study } : {}), ...(p.demand ? { demand: p.demand } : {}) }));
+  return JSON.stringify({ ...rest, picks }, null, 2) + '\n';
+}

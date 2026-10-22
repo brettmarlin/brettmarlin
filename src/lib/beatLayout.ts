@@ -5,6 +5,8 @@ export type Visual = Extract<BeatMedia, { kind: 'image' }> | Extract<BeatMedia, 
 export const PORTRAIT_MAX_RATIO = 0.9;
 export const LANDSCAPE_MIN_RATIO = 1.1;
 export const GRID_THRESHOLD = 7;
+/** A portrait sits beside the prose only when there is prose to sit beside. */
+export const SIDE_MIN_BODY_CHARS = 160;
 
 export function ratioOf(m: Visual): number {
   const w = m.kind === 'image' ? m.width : m.poster.width;
@@ -65,7 +67,7 @@ export function arrange(beat: Beat): BeatArrangement {
     return { mode: 'stack', rows: rows(items) };
   }
   const portraits = items.filter((m) => ratioOf(m) < PORTRAIT_MAX_RATIO).length;
-  if (items.length <= 2 && portraits === items.length) return { mode: 'side', side: 'right', rows: rows(items) };
+  if (items.length <= 2 && portraits === items.length && beat.body.trim().length >= SIDE_MIN_BODY_CHARS) return { mode: 'side', side: 'right', rows: rows(items) };
   return { mode: 'stack', rows: rows(items) };
 }
 

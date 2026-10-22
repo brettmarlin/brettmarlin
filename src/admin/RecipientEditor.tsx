@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { admin, ApiError, type GatedEntry, type RecipientPick, type RecipientRecord } from '../lib/api';
 import { studies } from '../lib/studies';
-import { recipientMarkdown, wordCount } from '../lib/vaultExport';
+import { payloadJson, recipientMarkdown, wordCount } from '../lib/vaultExport';
 import { todayPlus, formatDate, daysUntil } from '../lib/dates';
 import { useToast } from './Toast';
 import { errorText } from './useAsync';
@@ -184,7 +184,7 @@ export function RecipientEditor() {
         <section className="two-col">
           <div className="card">
             <div className="card-title"><h2 className="t-h3">Password</h2><span className="label muted">{rec.has_password ? `set ${rec.password_set ? formatDate(rec.password_set) : ''}` : 'none'}</span></div>
-            <p className="t-small secondary">Four words: two from the target's own language, two from the house list. The plaintext shows once, here, and is never stored. Rotating it invalidates the old one everywhere, including any study unlocked with it.</p>
+            <p className="t-small secondary">Four words: two from the target's own language, two from the house list. The plaintext shows once, here, and is never stored. Rotating it invalidates the old one everywhere, including any study unlocked with it, so record the new one in the vault's local password ledger before sending it.</p>
             <label className="field"><span>Target words, optional</span><input className="input" value={words} onChange={(e) => setWords(e.target.value)} placeholder="words from their site, role or JD, separated by spaces" /></label>
             <div className="row"><button type="button" className="btn small inverse" onClick={rotate} disabled={!protectedDerived}>{rec.has_password ? 'Rotate password' : 'Generate password'}</button>{!protectedDerived ? <span className="hint">Open links have no password.</span> : null}</div>
             {revealed ? <div className="stack"><div className="reveal-once">{revealed}</div><div className="row"><button type="button" className="btn small quiet" onClick={() => copy(revealed, 'Password')}>Copy</button><button type="button" className="btn small quiet" onClick={() => setRevealed(null)}>Hide</button></div></div> : null}
@@ -197,6 +197,7 @@ export function RecipientEditor() {
               {rec.status === 'live' ? <button type="button" className="btn small quiet" onClick={() => setStatus('draft')}>Back to draft</button> : null}
               {rec.status !== 'expired' ? <button type="button" className="btn small quiet" onClick={() => setStatus('expired')}>Expire now</button> : null}
               <button type="button" className="btn small quiet" onClick={() => copy(recipientMarkdown({ ...rec, slug }), 'Vault note')}>Copy as vault note</button>
+              <button type="button" className="btn small quiet" onClick={() => copy(payloadJson({ ...rec, slug }), 'Payload JSON')}>Copy payload JSON</button>
               <Link to={`/admin/events?slug=${rec.slug}`} className="btn small quiet">Access log</Link>
               <button type="button" className="btn small quiet" onClick={remove} style={{ marginLeft: 'auto' }}>Delete</button>
             </div>

@@ -2,6 +2,7 @@ import { lazy, Suspense } from 'react';
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { MotionConfig } from 'motion/react';
 import { Layout } from './components/Layout';
+import { usePageviewCapture } from './hooks/usePageviewCapture';
 
 const Home = lazy(() => import('./pages/Home').then((m) => ({ default: m.Home })));
 const Work = lazy(() => import('./pages/Work').then((m) => ({ default: m.Work })));
@@ -13,10 +14,16 @@ const RecipientSpace = lazy(() => import('./pages/RecipientSpace').then((m) => (
 const RecipientStudy = lazy(() => import('./pages/RecipientSpace').then((m) => ({ default: m.RecipientStudy })));
 const Admin = lazy(() => import('./admin/Admin').then((m) => ({ default: m.Admin })));
 
+function PageviewTracker() {
+  usePageviewCapture();
+  return null;
+}
+
 export function App() {
   return (
     <MotionConfig reducedMotion="user">
       <BrowserRouter>
+        <PageviewTracker />
         <Suspense fallback={null}>
           <Routes>
             <Route element={<Layout />}>
