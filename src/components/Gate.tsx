@@ -9,10 +9,11 @@ import { EASE } from '../lib/motion';
  * the right one a red rule sweeps across the top and the parent swaps the
  * content in. Reduced motion gets neither and loses nothing.
  */
-export function Gate({ title, body, onSubmit, state, retryIn, autoFocus = true, hint }: {
+export function Gate({ title, body, onSubmit, state, retryIn, autoFocus = true, hint, headingLevel = 2 }: {
   title: string; body?: string; onSubmit: (password: string) => Promise<void> | void;
-  state: 'idle' | 'checking' | 'wrong' | 'limited' | 'error' | 'ok'; retryIn?: number; autoFocus?: boolean; hint?: string;
+  state: 'idle' | 'checking' | 'wrong' | 'limited' | 'error' | 'ok'; retryIn?: number; autoFocus?: boolean; hint?: string; headingLevel?: 1 | 2;
 }) {
+  const Heading = headingLevel === 1 ? 'h1' : 'h2';
   const [value, setValue] = useState('');
   const [shake, setShake] = useState(false);
   const input = useRef<HTMLInputElement>(null);
@@ -32,7 +33,7 @@ export function Gate({ title, body, onSubmit, state, retryIn, autoFocus = true, 
         <span className="label"><span className="signal">Private</span> <span className="muted">{hint ?? 'Password protected'}</span></span>
         <Lock />
       </div>
-      <h2 className="t-h2 balance">{title}</h2>
+      <Heading className="t-h2 balance">{title}</Heading>
       {body ? <p className="secondary t-small measure">{body}</p> : null}
       <div className="gate-form">
         <label className="field">

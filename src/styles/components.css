@@ -121,7 +121,7 @@
 .footer-col { display: grid; gap: var(--s-2); align-content: start; font-size: var(--fs-small); }
 .footer-col a:hover { color: var(--signal); }
 .footer-bottom { display: flex; justify-content: space-between; gap: var(--s-4); padding-top: var(--s-4); border-top: var(--hairline) solid var(--rule); }
-.footer-admin { color: var(--ink-4); }
+.footer-admin { color: var(--ink-3); }
 .footer-admin:hover { color: var(--ink); }
 @media (max-width: 720px) { .footer-grid { grid-template-columns: 1fr 1fr; } }
 
@@ -174,7 +174,7 @@
 .rail-item.active { color: var(--ink); }
 .rail-item.active .n { color: var(--signal); }
 .rail-item.sub { padding-left: 0; }
-.rail-item.sub .n { color: var(--ink-4); }
+.rail-item.sub .n { color: var(--ink-3); }
 .rail-item.sub.active .n { color: var(--signal); }
 .rail-progress { height: 2px; background: var(--rule); margin-bottom: var(--s-4); position: relative; overflow: hidden; }
 .rail-progress > span { position: absolute; inset: 0; background: var(--signal); transform-origin: left; }

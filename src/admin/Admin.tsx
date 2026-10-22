@@ -61,7 +61,7 @@ function Login({ onDone }: { onDone: () => void }) {
     catch (err) { session.clear(SESSION_KEYS.adminToken); setState(err instanceof ApiError && err.status === 401 ? 'wrong' : 'error'); }
   };
   return (
-    <div className="login">
+    <main className="login" id="main">
       <form className="card" onSubmit={submit}>
         <div className="between"><span className="wordmark-name">Brett Marlin</span><span className="label muted">Admin</span></div>
         <h1 className="t-h2">Sign in with the Worker token.</h1>
@@ -71,7 +71,7 @@ function Login({ onDone }: { onDone: () => void }) {
         {state === 'error' ? <p className="error">Could not reach the Worker. Is the API running?</p> : null}
         <div className="row"><button className="btn inverse" type="submit" disabled={!token.trim() || state === 'checking'}>{state === 'checking' ? 'Checking' : 'Sign in'}</button><Link to="/" className="btn quiet">Back to the site</Link></div>
       </form>
-    </div>
+    </main>
   );
 }
 

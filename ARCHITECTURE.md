@@ -89,4 +89,6 @@ the rest, so every page renders offline.
 `npm run verify`: typecheck, unit tests (scripts and Worker), copy guard,
 bundle guard, clearance guard, Vite build, dist guard. CI runs the same.
 `npm run screenshots` captures every surface at desktop and phone widths
-with the Playwright Chromium already on the machine.
+with the Playwright Chromium already on the machine, and `npm run axe` runs
+axe-core (WCAG 2.1 AA plus best practice) against eleven rendered pages,
+failing on any serious or critical violation. Both need `npm run dev` up.

@@ -83,7 +83,7 @@ function SpaceChrome({ children, company }: { children: React.ReactNode; company
           <div className="nav-mobile"><ThemeToggle /></div>
         </div>
       </header>
-      {children}
+      <main id="main">{children}</main>
     </div>
   );
 }
@@ -104,6 +104,7 @@ function Shell({ state, submit, children }: { state: SpaceState; submit: (p: str
               onSubmit={submit}
               state={state.gate}
               retryIn={state.retryIn}
+              headingLevel={1}
             />
             <p className="t-caption muted">Looking for the public portfolio instead? <Link to="/" className="arrow-link">It is here<Arrow className="arrow" /></Link></p>
           </motion.div>

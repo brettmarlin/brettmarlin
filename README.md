@@ -27,6 +27,7 @@ npm install
 npm run dev          # site on :5173, local Worker on :8787 (admin token: dev-admin-token)
 npm run verify       # typecheck, tests, guards, build
 npm run screenshots  # every surface, desktop and phone, into screenshots/
+npm run axe          # axe-core against every rendered surface (needs npm run dev)
 ```
 
 `VITE_LOCAL_IMAGES=1 npm run dev` renders images from the vault's `_attachments/` folder and placeholders for the rest, so the whole site works offline.
