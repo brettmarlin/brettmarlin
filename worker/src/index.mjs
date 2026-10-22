@@ -595,7 +595,9 @@ async function logEvent(env, event, slug, request, extra = {}) {
   const cf = request.cf || {};
   const record = {
     ts: new Date().toISOString(), event, slug,
-    referrer: request.headers.get('referer') || null,
+    // Both headers are caller-controlled and the record must stay under
+    // KV's 1 KiB metadata cap, so each is cut to a length that still reads.
+    referrer: (request.headers.get('referer') || '').slice(0, 200) || null,
     ua: (request.headers.get('user-agent') || '').slice(0, 160) || null,
     country: cf.country || null, city: cf.city || null,
     ...extra,

@@ -138,6 +138,20 @@ test('recipient route: anonymous views are logged once per address, slug and win
   assert.equal(views(), 5, 'an expired link logs once per window too');
 });
 
+test('events: a long referer and user agent are cut so the record stays under the KV metadata cap', async () => {
+  const store = kv();
+  const env = { RECIPIENTS: store, ADMIN_TOKEN: 't' };
+  store.store.set('open-2', JSON.stringify({ slug: 'open-2', status: 'live', picks: [] }));
+  const headers = { referer: `https://example.com/?x=${'r'.repeat(4000)}`, 'user-agent': 'u'.repeat(3000) };
+  assert.equal((await call(env, '/api/recipient/open-2', { headers })).status, 200);
+  const listed = await (await call(env, '/api/admin/events', { headers: admin('t') })).json();
+  const ev = listed.events.find((e) => e.slug === 'open-2');
+  assert.ok(ev, 'the view was logged');
+  assert.equal(ev.referrer.length, 200);
+  assert.equal(ev.ua.length, 160);
+  assert.ok(JSON.stringify(ev).length < 1024, `record is ${JSON.stringify(ev).length} bytes`);
+});
+
 test('recipient route: a gated pick by reference is embedded from the gated: entry at read time', async () => {
   const store = kv();
   const env = { RECIPIENTS: store, ADMIN_TOKEN: 't' };
