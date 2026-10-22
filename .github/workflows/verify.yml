@@ -1,0 +1,25 @@
+# The same command a stranger runs locally: npm run verify. The clearance
+# guard needs the vault and announces a skip here; it enforces in npm run
+# build on a machine that has the vault checked out.
+name: verify
+
+on:
+  push:
+    branches: [main, 'claude/**']
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run verify

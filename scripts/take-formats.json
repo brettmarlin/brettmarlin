@@ -1,0 +1,120 @@
+{
+  "version": "1.2.1",
+  "updated": "2026-08-20",
+  "_what": "The formats a case-study take may be written in. A take's angle names its format, and the format declares the sections that format requires. scripts/check-take-formats.mjs in ~/Dev/brettmarlin enforces this; skills/ offer this list when prompting for a take.",
+  "_why": "A take is chosen at authoring time and carries a shape. Before this file the shape was whatever the last take happened to have, which is how convoy's video take was silently skipped by a tool expecting Card/Problem/Role/Outcome. A format that is written down can be asked for, checked, and offered as a menu.",
+  "_reader_facing": "NEVER. A take is an authoring concept. No reader, recipient, or password-protected bespoke view is ever shown which take they are reading, or that others exist.",
+  "formats": {
+    "decisions-outcomes": {
+      "label": "Decisions and outcomes",
+      "purpose": "The default framing for public surfaces: what was decided, and what it produced.",
+      "audience": "hiring managers, prospective clients, anyone arriving cold",
+      "publishable": true,
+      "sections_required": [
+        "Card",
+        "Context",
+        "Problem",
+        "Role",
+        "Decisions",
+        "Outcome",
+        "Through-line"
+      ],
+      "sections_optional": [
+        "Beats",
+        "Clearance basis"
+      ]
+    },
+    "public-abstracted": {
+      "label": "The pattern",
+      "purpose": "The same work with the client and specifics abstracted to the pattern, so restricted engagements can still be shown.",
+      "audience": "public surfaces where the engagement itself is not nameable",
+      "publishable": true,
+      "sections_required": [
+        "Card",
+        "Context",
+        "Problem",
+        "Role",
+        "Decisions",
+        "Outcome"
+      ],
+      "sections_optional": [
+        "Beats",
+        "Through-line",
+        "Clearance basis",
+        "Original prose",
+        "A guess that was honest, and still wrong",
+        "The same symptom, a different document",
+        "Three workspaces, spec first"
+      ]
+    },
+    "recipient-named": {
+      "label": "Named for a recipient",
+      "purpose": "Written for one named reader, with the detail a cold surface cannot carry.",
+      "audience": "a single recipient behind a bespoke portfolio",
+      "publishable": false,
+      "sections_required": [
+        "Card",
+        "Context",
+        "Problem",
+        "Role",
+        "Decisions",
+        "Outcome"
+      ],
+      "sections_optional": [
+        "Beats",
+        "Through-line"
+      ]
+    },
+    "video": {
+      "label": "Video walkthrough script",
+      "purpose": "A spoken walkthrough: a spine, then timed beats with what is on screen and what is said.",
+      "audience": "whoever the recording is sent to",
+      "publishable": false,
+      "prose_take": false,
+      "sections_required": [],
+      "sections_optional": [],
+      "_note": "Not a prose take. It uses `## Beat N — ...` headings rather than `### ` sections, so the prose-shaped checks do not apply to it. Marked here so tools can recognise it deliberately instead of skipping it silently, which is what happened before this file existed."
+    },
+    "full-case": {
+      "label": "Full case",
+      "purpose": "The whole story told in beats: the narrative walkthrough, one beat at a time, each carrying the image that is evidence for it. What a reader gets when they want the case study rather than the summary of it.",
+      "audience": "a fractional client evaluating the work in depth, or any surface where a study has earned the full telling",
+      "publishable": true,
+      "sections_required": [
+        "Card",
+        "Context",
+        "Problem",
+        "Role",
+        "Decisions",
+        "Outcome",
+        "Beats"
+      ],
+      "sections_optional": [
+        "Through-line",
+        "Clearance basis",
+        "Original prose"
+      ],
+      "_note": "Beats is what distinguishes this format from decisions-outcomes, where Beats is optional. A full-case take without beats is a decisions-outcomes take that has not admitted it."
+    },
+    "short": {
+      "label": "Short",
+      "purpose": "The whole case in six to nine beats. Same framing as decisions-outcomes, edited down to the moments where the work turned, so it is read rather than admired and abandoned.",
+      "audience": "everyone. This is the one that ships once it exists.",
+      "publishable": true,
+      "sections_required": [
+        "Card",
+        "Context",
+        "Problem",
+        "Role",
+        "Decisions",
+        "Outcome"
+      ],
+      "sections_optional": [
+        "Beats",
+        "Through-line",
+        "Clearance basis"
+      ],
+      "_note": "Written by skills/shape-case-study from an existing take, never from scratch. The take it was cut from STAYS in the file: it is the long record and the source for future drafts, and the material dropped on the way here lives there rather than in a graveyard section. Which of the two publishes is published_take, so switching back is one line."
+    }
+  }
+}

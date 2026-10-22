@@ -1,0 +1,4 @@
+User-agent: *
+Disallow: /for/
+Disallow: /admin
+Sitemap: https://www.brettmarlin.xyz/sitemap.xml

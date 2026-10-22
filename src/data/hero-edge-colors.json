@@ -1,0 +1,86 @@
+{
+  "agentic-decision-layer-defense/01-decision-layer-hero.8b04bafa.png": {
+    "left": "#0a7d9d",
+    "right": "#152142"
+  },
+  "altana/00-hero.c1a02b5d.png": {
+    "left": "#2e9ed1",
+    "right": "#bcb243"
+  },
+  "aol-demand-content-platform/00-aol-hero.jpg": {
+    "left": "#eceff0",
+    "right": "#edeff0"
+  },
+  "blend-design-system-and-research-ops/00-hero.065e89a5.png": {
+    "left": "#01b0a5",
+    "right": "#0182fe"
+  },
+  "carta/00-hero.f7a37055.png": {
+    "left": "#36c3e2",
+    "right": "#01ddae"
+  },
+  "comcast-seeit-mobile-strategy/00-comcast-seeit-hero.jpg": {
+    "left": "#e8edee",
+    "right": "#e8edee"
+  },
+  "expo-fundraising-prototype-sprint/00-expo-hero.jpg": {
+    "left": "#eceff0",
+    "right": "#eceff0"
+  },
+  "impact-product-de-risking-the-pivot/01-impact-hero.085e837e.png": {
+    "left": "#d17bff",
+    "right": "#01adff"
+  },
+  "lobus-mobile-collector-app/01-collector-hero.f5f6f266.png": {
+    "left": "#a89c98",
+    "right": "#9f8b7e"
+  },
+  "lobus-nft-fractional-ownership-builder/00-hero.da55340c.png": {
+    "left": "#9aa2a8",
+    "right": "#9fa4a8"
+  },
+  "lobus-verified-object-capture/00-lobus-hero.588bd978.png": {
+    "left": "#c36dac",
+    "right": "#2f9dc7"
+  },
+  "maf-machine-ai-endurance-coach/00-maf-hero.c42a382a.png": {
+    "left": "#d055a1",
+    "right": "#d055a1"
+  },
+  "marliin-factory/00-hero.244079b8.png": {
+    "left": "#7a5a33",
+    "right": "#703d36"
+  },
+  "marlo/00-hero.405fd2bc.png": {
+    "left": "#d7eff2",
+    "right": "#f4eed0"
+  },
+  "mixpanel-design-org-ownership/00-mixpanel-hero.febf999c.png": {
+    "left": "#d7f3fd",
+    "right": "#ecf3f9"
+  },
+  "overdog-android-redesign/00-overdog-hero.jpg": {
+    "left": "#ebeef0",
+    "right": "#ebeeef"
+  },
+  "sayari-design-org-turnaround/00-hero.7806beae.png": {
+    "left": "#e7f8fd",
+    "right": "#e7f9f7"
+  },
+  "studionow-saas-platform-evolution/00-studionow-hero.d040e588.png": {
+    "left": "#eceeef",
+    "right": "#f1f2f3"
+  },
+  "telmate-cross-device-ux-unification/00-telmate-hero.jpg": {
+    "left": "#eceef0",
+    "right": "#eceeef"
+  },
+  "youscience-marketing-launch-campaign/00-ysmarketing-hero.jpg": {
+    "left": "#ecf0f0",
+    "right": "#eceff0"
+  },
+  "youscience-results-platform-redesign/00-ysproduct-hero.jpg": {
+    "left": "#eceff0",
+    "right": "#eceff0"
+  }
+}

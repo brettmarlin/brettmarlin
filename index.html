@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="color-scheme" content="light dark" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#0a0a0a" media="(prefers-color-scheme: dark)" />
+    <meta name="description" content="Brett Marlin. Design leader, twelve years in-house at Carta, Mixpanel, Blend, Altana and Sayari. Still in the file. Case studies, writing, and how to work together." />
+    <title>Brett Marlin</title>
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Brett Marlin" />
+    <meta property="og:url" content="https://www.brettmarlin.xyz/" />
+    <meta property="og:title" content="Brett Marlin" />
+    <meta property="og:description" content="Design leader. Twelve years in-house. Still in the file." />
+    <meta property="og:image" content="https://www.brettmarlin.xyz/og-image.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Brett Marlin" />
+    <meta name="twitter:description" content="Design leader. Twelve years in-house. Still in the file." />
+    <meta name="twitter:image" content="https://www.brettmarlin.xyz/og-image.png" />
+    <script>
+      // Theme before first paint: a stored choice wins, then the OS. Kept inline
+      // so a dark-mode visitor never sees a white flash before React mounts.
+      (function () {
+        try {
+          var stored = localStorage.getItem('bm-theme');
+          var dark = stored ? stored === 'dark' : window.matchMedia('(prefers-color-scheme: dark)').matches;
+          document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
+        } catch (e) {
+          document.documentElement.setAttribute('data-theme', 'light');
+        }
+      })();
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
