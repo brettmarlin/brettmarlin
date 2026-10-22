@@ -28,6 +28,7 @@ export function Gate({ title, body, onSubmit, state, retryIn, autoFocus = true, 
 
   return (
     <form className={`gate ${shake ? 'shake' : ''}`} onSubmit={submit} aria-busy={state === 'checking'}>
+      {state === 'checking' ? <span className="gate-checking" aria-hidden="true" /> : null}
       {state === 'ok' ? <motion.span className="gate-sweep" initial={{ scaleX: 0 }} animate={{ scaleX: 1 }} transition={{ duration: reduce ? 0 : 0.8, ease: EASE }} aria-hidden="true" /> : null}
       <div className="gate-head">
         <span className="label"><span className="signal">Private</span> <span className="muted">{hint ?? 'Password protected'}</span></span>

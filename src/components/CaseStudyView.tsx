@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import React, { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, useReducedMotion, useScroll, useSpring, useTransform } from 'motion/react';
 import { Picture } from './Picture';
@@ -70,7 +70,7 @@ export function CaseStudyView({ study, extension, backTo, backLabel, framing, ne
   const lightEdges = hero?.edgeColors ? isLight(hero.edgeColors.left) && isLight(hero.edgeColors.right) : true;
 
   return (
-    <article className="cs" aria-labelledby="cs-title">
+    <article className="cs" aria-labelledby="cs-title" style={hero?.edgeColors ? ({ '--tint': hero.edgeColors.left } as React.CSSProperties) : undefined}>
       <div className="container cs-head">
         <div className="cs-crumbs label muted">
           <Link to={backTo} className="arrow-link"><ArrowLeft className="arrow" />{backLabel}</Link>
