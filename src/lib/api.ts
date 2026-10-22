@@ -38,6 +38,10 @@ export type RecipientResult =
 
 const url = (path: string) => `${API_BASE}${path}`;
 
+/** The SPA fallback answers every unknown path with index.html and a 200.
+ *  Only JSON counts as the Worker answering. */
+const isJson = (res: Response) => (res.headers.get('content-type') ?? '').includes('application/json');
+
 export async function fetchRecipient(slug: string, password?: string | null, signal?: AbortSignal): Promise<RecipientResult> {
   let res: Response;
   try {
@@ -47,6 +51,7 @@ export async function fetchRecipient(slug: string, password?: string | null, sig
   } catch (e) {
     return { status: 'error', message: (e as Error).message };
   }
+  if (!isJson(res)) return { status: 'error', message: 'The recipient service did not answer' };
   const body = await res.json().catch(() => ({}));
   if (res.ok) return { status: 'ok', data: body as RecipientPayload };
   if (res.status === 401 && body.error === 'password_required') return { status: 'password', recipientName: body.recipient_name ?? '', company: body.company ?? '' };
@@ -60,7 +65,9 @@ export async function fetchRecipient(slug: string, password?: string | null, sig
 export async function fetchStudyGate(slug: string, signal?: AbortSignal): Promise<boolean> {
   try {
     const res = await fetch(url(`/api/study/${encodeURIComponent(slug)}/gate`), { signal });
-    return res.ok;
+    if (!res.ok || !isJson(res)) return false;
+    const body = await res.json().catch(() => null);
+    return body?.locked === true;
   } catch {
     return false;
   }
@@ -79,8 +86,9 @@ export async function unlockStudy(slug: string, password: string): Promise<Unloc
   } catch (e) {
     return { status: 'error', message: (e as Error).message };
   }
+  if (!isJson(res)) return { status: 'error', message: 'The gate did not answer' };
   const body = await res.json().catch(() => ({}));
-  if (res.ok) return { status: 'ok', study: body.study, via: body.via ?? { company: '' } };
+  if (res.ok && body.study) return { status: 'ok', study: body.study, via: body.via ?? { company: '' } };
   if (res.status === 401) return { status: 'bad-password' };
   if (res.status === 429) return { status: 'rate-limited', retryIn: Number(body.retry_in ?? 60) };
   return { status: 'error', message: body.error ?? `HTTP ${res.status}` };

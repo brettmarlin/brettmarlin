@@ -18,23 +18,23 @@ export function Work() {
   const setViewPersist = (v: View) => { setView(v); try { localStorage.setItem('bm-work-view', v); } catch { /* ignore */ } };
   const list = useMemo(() => (tag ? studies.filter((s) => s.tags.includes(tag)) : studies), [tag]);
   const tags = useMemo(() => tagsByCount(2), []);
-  useDocumentTitle(tag ? `${tagLabel(tag)}, work` : 'Work', 'Twenty one case studies across AI products, design systems, research practices and design organizations.');
+  useDocumentTitle(tag ? `${tagLabel(tag)}, work` : 'Work', `${studies.length} case studies across AI products, design systems, research practices and design organizations.`);
 
   return (
     <section className="container">
       <header className="page-head">
         <span className="label"><span className="signal">02</span> Work</span>
-        <h1 className="t-display page-title">{tag ? tagLabel(tag) : 'Every study, newest first.'}</h1>
+        <h1 className="t-display page-title">{tag ? tagLabel(tag) : 'Every study.'}</h1>
         <p className="t-lead measure pretty secondary">
-          {tag ? `${list.length} of ${studies.length} studies carry this discipline.` : 'Twenty one case studies, from a defense decision layer shipped this year to the platform AOL acquired. Filter by discipline, or switch to the grid to browse by eye.'}
+          {tag ? `${list.length} of ${studies.length} studies carry this discipline.` : `${studies.length} case studies, from ${studies[0]?.title ?? 'the latest'} in ${studies[0]?.yearStart ?? ''} to ${studies[studies.length - 1]?.title ?? 'the earliest'} in ${studies[studies.length - 1]?.yearStart ?? ''}. Filter by discipline, or switch to the grid to browse by eye.`}
         </p>
       </header>
 
       <div className="work-toolbar">
         <div className="chips" role="group" aria-label="Filter by discipline">
-          <Link to="/work" className={`chip ${!tag ? 'on' : ''}`}>All {studies.length}</Link>
+          <Link to="/work" className={`chip ${!tag ? 'on' : ''}`} aria-current={!tag ? 'page' : undefined}>All {studies.length}</Link>
           {tags.filter((t, i) => allTags || i < 10 || t.id === tag).map((t) => (
-            <Link key={t.id} to={`/work/tag/${tagSlug(t.id)}`} className={`chip ${tag === t.id ? 'on' : ''}`}>{tagLabel(t.id)} {t.count}</Link>
+            <Link key={t.id} to={`/work/tag/${tagSlug(t.id)}`} className={`chip ${tag === t.id ? 'on' : ''}`} aria-current={tag === t.id ? 'page' : undefined}>{tagLabel(t.id)} {t.count}</Link>
           ))}
           {tags.length > 10 ? <button type="button" className="chip" onClick={() => setAllTags((v) => !v)} aria-expanded={allTags}>{allTags ? 'Fewer' : `+${tags.length - 10} more`}</button> : null}
         </div>

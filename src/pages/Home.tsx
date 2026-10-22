@@ -26,7 +26,7 @@ export function Home() {
           <span className="hide-sm">Portfolio, {new Date().getFullYear()}</span>
           <span className="hide-sm">{SITE.location}</span>
         </div>
-        <SplitText as="h1" text={profile.statement} className="t-display-xl hero-statement" />
+        <SplitText as="h1" id="statement" text={profile.statement} className="t-display-xl hero-statement" />
         <div className="grid hero-grid">
           <motion.p className="t-lead hero-support col-7 pretty" variants={rise} custom={8} initial={reduce ? false : 'hidden'} animate="show">
             {profile.support}
@@ -49,7 +49,7 @@ export function Home() {
         <motion.div className="hero-proof rule-strong" variants={rise} custom={12} initial={reduce ? false : 'hidden'} animate="show">
           {profile.proof.map((p) => (
             <div key={p.label} className="proof">
-              <span className="proof-n t-display"><Counter to={Number(p.n)} /></span>
+              <span className="proof-n t-display"><Counter to={p.n === 'studies' ? studies.length : Number(p.n)} /></span>
               <span className="label muted">{p.label}</span>
             </div>
           ))}
@@ -57,7 +57,7 @@ export function Home() {
       </section>
 
       <section className="section container" id="work" aria-labelledby="work-head">
-        <SectionHead n="02" title="Selected work" aside={<span>{studies.length} studies, newest first</span>} id="work-head" />
+        <SectionHead n="02" title="Selected work" aside={<span>{studies.length} studies</span>} id="work-head" />
         <WorkIndex studies={studies} />
         <div className="section-foot">
           <Link to="/work" className="arrow-link t-h3">Browse by discipline, year or grid<Arrow className="arrow" /></Link>

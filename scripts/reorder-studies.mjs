@@ -25,8 +25,9 @@ import { readFileSync, writeFileSync, readdirSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { homedir } from 'node:os';
 import { pathToFileURL } from 'node:url';
+import { resolveVaultDir } from './vault-dir.mjs';
 
-const VAULT_DIR = process.env.VAULT_DIR ?? join(homedir(), 'Dev', 'marliin-vault');
+const VAULT_DIR = resolveVaultDir();
 const STUDIES = join(VAULT_DIR, 'case-studies');
 const ORDER_FILE = join(STUDIES, '_order.md');
 

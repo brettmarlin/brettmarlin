@@ -12,6 +12,8 @@ import {
   matcherFor,
   findHits,
   parseAwaitingDecision,
+  awaitingEntities,
+  PUBLIC_TEXT_PATHS,
   snippet,
 } from './check-clearance.mjs';
 
@@ -182,4 +184,32 @@ test('snippet elides at both ends and collapses escaped newlines', () => {
   const s = snippet(text, 200, 5);
   assert.ok(s.startsWith('…') && s.endsWith('…'));
   assert.match(s, /Patch/);
+});
+
+test('awaitingEntities reads the bold names of each awaiting bullet as unreviewed, splitting on commas and dropping a leading article', () => {
+  const md = [
+    '## Awaiting decision',
+    'Agents append; Brett decides.',
+    '',
+    '- **McKinsey & Co.** (agency client). Found 2026-10-15.',
+    '- **BASF, L.L. Bean, US Customs and Border Protection** (customers, Altana scope).',
+    '- **Capitol Records, the NFL** (clients).',
+    '- **Expo** (already in the index).',
+    '',
+    '## Cleared active engagements',
+  ].join('\n');
+  const out = awaitingEntities(md, [{ name: 'Expo', status: 'public' }]);
+  assert.deepEqual(out.map((e) => e.name), ['McKinsey & Co.', 'BASF', 'L.L. Bean', 'US Customs and Border Protection', 'Capitol Records', 'NFL']);
+  assert.ok(out.every((e) => e.status === 'unreviewed'));
+  const hits = scanBundle({ bundleText: 'Clients included McKinsey & Co. and the NFL.', entities: out, surface: 'public-grid' });
+  assert.deepEqual(hits.map((h) => h.name), ['McKinsey & Co.', 'NFL']);
+});
+
+test('awaitingEntities is empty when the section is absent', () => {
+  assert.deepEqual(awaitingEntities('# nothing here'), []);
+});
+
+test('the guard scans every hand-written public text surface, not only the bundle', () => {
+  const tails = PUBLIC_TEXT_PATHS.map((p) => p.split('/').slice(-2).join('/'));
+  assert.deepEqual(tails, ['data/caseStudies.ts', 'data/substack.ts', 'data/profile.ts', 'public/brett.md', 'brett-marlin-portfolio/index.html']);
 });

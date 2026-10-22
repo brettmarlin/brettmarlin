@@ -33,13 +33,13 @@ export function Footer() {
           </div>
           <div className="footer-col colophon">
             <span className="label muted">Colophon</span>
-            <span className="t-small muted">Set in Archivo and IBM Plex Mono on a twelve column grid. Built with React, Motion and Cloudflare. Case studies are generated from a private vault; names ship only when cleared. Press g to see the grid.</span>
+            <span className="t-small muted">Set in Archivo and IBM Plex Mono on a twelve column grid. Built with React, Motion and Cloudflare. Case studies are generated from a private vault; names ship only when cleared. Shift, Alt and G show the grid.</span>
           </div>
         </div>
         <div className="footer-bottom label muted">
           <span>{year} Brett Marlin</span>
           <span>{SITE.location}</span>
-          <Link to="/admin" className="footer-admin" aria-label="Admin">Admin</Link>
+          <button type="button" className="footer-admin" onClick={() => window.dispatchEvent(new CustomEvent('bm:grid'))}>Grid</button>
         </div>
       </div>
     </footer>

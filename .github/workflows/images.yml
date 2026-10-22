@@ -1,0 +1,114 @@
+# Put the vault's staged images in R2, bind them, and commit the bundle.
+#
+# WHY THIS EXISTS. Uploading used to be a shell script that `npm run study`
+# generated, gitignored, and left for a human to run from a Mac with wrangler
+# logged in. That made the images a manual step nobody could do from a phone,
+# left no record of what had actually run, and put the one irreversible action
+# in the pipeline (writing to a public bucket) furthest from any check.
+#
+# Now: push, and the images follow.
+name: images
+
+# DISABLED ON PURPOSE — manual trigger only. Do not restore the push and
+# schedule triggers until MAR-27 lands.
+#
+# The 2026-08-15 pipeline audit found that three tools disagree about which R2
+# prefix a study owns: bind-images keys by frontmatter slug, study-status and
+# upload-missing by vault filename, and the generator by the published take's
+# Card slug — which diverges on seven studies. The worker proves it:
+# /api/images/convoy-defense-agentic-governance returns 0 images while
+# /api/images/agentic-decision-layer-defense returns 9, for the same study.
+#
+# This workflow has never completed a run: it dies at the vault checkout
+# because VAULT_TOKEN is unset. That accident is the only reason the bucket is
+# clean. Its first SUCCESSFUL run would upload those seven studies into
+# prefixes the site never reads, hourly, committing to both repos as it went —
+# so the fix is not to add the secret, it is to make the prefix canonical
+# first.
+#
+# Left as workflow_dispatch so it cannot fire by accident, and so adding the
+# secret is safe on its own.
+on:
+  workflow_dispatch:
+
+concurrency:
+  # Two runs uploading the same study would race on the bind commit. Later
+  # push wins; the earlier one is cancelled rather than queued, because its
+  # view of the vault is already stale.
+  group: images-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+
+jobs:
+  images:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      # The vault is a separate private repo and it is the source of truth for
+      # every image. VAULT_TOKEN is a PAT with contents:write on it.
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          repository: brettmarlin/marliin-vault
+          token: ${{ secrets.VAULT_TOKEN }}
+          path: .vault
+          fetch-depth: 0
+
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+
+      # UPLOAD. Idempotent: asks the worker what R2 holds and uploads only the
+      # difference, then asks again to confirm. wrangler exiting 0 is not
+      # evidence — it has meant "wrote to a local simulator" before.
+      - name: Upload staged images to R2
+        env:
+          VAULT_DIR: ${{ github.workspace }}/.vault
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: node scripts/upload-missing.mjs
+
+      # BIND. Flips _shot: (staged · ...) to _media: now the files are really
+      # there. This WRITES TO THE VAULT, which is why the commit below exists.
+      - name: Bind images
+        env:
+          VAULT_DIR: ${{ github.workspace }}/.vault
+        run: npm run bind-images -- --apply
+
+      - name: Commit the binding back to the vault
+        working-directory: .vault
+        run: |
+          git config user.name  "marliin-images-bot"
+          git config user.email "bot@marliin.local"
+          if [ -n "$(git status --porcelain)" ]; then
+            git add -A case-studies
+            git commit -m "bind: images confirmed in R2 [skip ci]"
+            git push
+          else
+            echo "nothing to bind"
+          fi
+
+      # GENERATE. Reads the now-bound vault and rewrites the committed bundle.
+      - name: Generate the bundle
+        env:
+          VAULT_DIR: ${{ github.workspace }}/.vault
+        run: npm run generate
+
+      - name: Commit the bundle
+        run: |
+          git config user.name  "marliin-images-bot"
+          git config user.email "bot@marliin.local"
+          if [ -n "$(git status --porcelain src/data)" ]; then
+            git add src/data
+            # [skip ci] so this commit does not re-trigger the workflow that
+            # made it. Without it every run schedules the next one.
+            git commit -m "generate: case study bundle [skip ci]"
+            git push
+          else
+            echo "bundle already current"
+          fi

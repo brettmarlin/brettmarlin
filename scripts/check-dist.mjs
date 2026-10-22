@@ -6,8 +6,9 @@
  */
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-const DIST = new URL('../dist/assets/', import.meta.url).pathname;
+const DIST = fileURLToPath(new URL('../dist/assets/', import.meta.url));
 // Content markers fail anywhere: a gated take's own words, or a sealed name.
 const CONTENT_MARKERS = ['recipient-only', 'site_visibility', 'air-gapped', 'IL5', 'IL6', 'Anduril', 'Convoy'];
 // Field markers are the KV record's own keys. They may appear in the admin

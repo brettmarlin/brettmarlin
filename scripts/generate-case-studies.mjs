@@ -24,7 +24,7 @@
 import { readFileSync, readdirSync, writeFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { homedir } from 'node:os';
-import { pathToFileURL } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import {
   buildStudy,
   collectBeatsByTake,
@@ -36,13 +36,14 @@ import {
   scalarField,
 } from './vault-reader.mjs';
 import { edgeColorsFor } from './hero-edge-color.mjs';
+import { resolveVaultDir } from './vault-dir.mjs';
 
-const VAULT_DIR = process.env.VAULT_DIR ?? join(homedir(), 'Dev', 'marliin-vault');
+const VAULT_DIR = resolveVaultDir();
 const CASE_DIR = join(VAULT_DIR, 'case-studies');
 const WORKER_BASE = 'https://marliin-recipient-worker.brett-6a3.workers.dev';
-const OUT_PATH = new URL('../src/data/caseStudies.ts', import.meta.url).pathname;
-const DIMENSIONS_PATH = new URL('../src/data/image-dimensions.json', import.meta.url).pathname;
-const EDGE_COLORS_PATH = new URL('../src/data/hero-edge-colors.json', import.meta.url).pathname;
+const OUT_PATH = fileURLToPath(new URL('../src/data/caseStudies.ts', import.meta.url));
+const DIMENSIONS_PATH = fileURLToPath(new URL('../src/data/image-dimensions.json', import.meta.url));
+const EDGE_COLORS_PATH = fileURLToPath(new URL('../src/data/hero-edge-colors.json', import.meta.url));
 const CHECK = process.argv.includes('--check');
 const YOUTUBE_POSTER_SENTINEL = 'youtube';
 
@@ -68,7 +69,7 @@ const YOUTUBE_POSTER_SENTINEL = 'youtube';
 // is a committed copy so the tests and CI run without the vault present.
 function loadTakeFormats() {
   const vaultCopy = join(VAULT_DIR, 'take-formats.json');
-  const path = existsSync(vaultCopy) ? vaultCopy : new URL('./take-formats.json', import.meta.url).pathname;
+  const path = existsSync(vaultCopy) ? vaultCopy : fileURLToPath(new URL('./take-formats.json', import.meta.url));
   return JSON.parse(readFileSync(path, 'utf8')).formats;
 }
 const TAKE_FORMATS = loadTakeFormats();
@@ -445,7 +446,7 @@ function emit(studies) {
 
 export type BeatMedia =
   // edgeColors is the hero backdrop: one hex per side edge, sampled at
-  // generate time (scripts/hero-edge-color.mjs) — two, because a gradient
+  // generate time (scripts/hero-edge-color.mjs), two because a gradient
   // hero's edges disagree. Only heroes carry it; absent means the detail
   // page falls back to bg-inverse.
   | { kind: 'image'; src: string; alt: string; width: number; height: number; edgeColors?: { left: string; right: string } }

@@ -1,26 +1,6 @@
-### Brett Marlin
+# brettmarlin.xyz
 
-Product and design leader, 25 years. Building AI agent systems hands-on.
-
-I've led design at Carta, Mixpanel, Blend, and Altana AI, and spent a year at Pivotal Labs learning to build the way good engineering teams build. These days I'm encoding senior product judgment into AI agent teams and shipping the tools that come out of it.
-
-Most of what I do now lives at the intersection of product taste and working code. I design the system, then I build it.
-
-**Currently**
-- Founder of [Marliin](http://www.marliin.com), a principal-led AI product studio
-- Building agent governance systems, design systems, and shipped product surfaces
-- Writing about it at [Marliin Field Notes](https://brettmarlin.substack.com)
-
-**Background**
-Head of Design at Carta, Mixpanel, Blend, Altana AI. Pivotal Labs. VP of Product at Lobus. SCAD-trained. Boston Marathon finisher.
-
-[marliin.com](http://www.marliin.com) · [LinkedIn](https://www.linkedin.com/in/brettmarlin) · [@brettmarlin](https://x.com/brettmarlin)
-
----
-
-## The site
-
-This repository also holds the source of [brettmarlin.xyz](https://www.brettmarlin.xyz): a Swiss-grid portfolio generated from a private vault of case studies, with password-protected recipient views and an admin panel on a Cloudflare Worker.
+The source of [brettmarlin.xyz](https://www.brettmarlin.xyz): a Swiss-grid portfolio generated from a private vault of case studies, with password-protected recipient views and an admin panel on a Cloudflare Worker.
 
 ```
 npm install
@@ -50,3 +30,7 @@ npm run axe          # axe-core against every rendered surface (needs npm run de
 - **Worker:** `npm run worker:deploy` (reads `worker/wrangler.toml`). Secrets: `ADMIN_TOKEN` (required), `POSTHOG_API_KEY` (optional). The KV namespace and R2 bucket are the ones the previous site used, so existing recipient links keep working.
 
 Fuller tour: `ARCHITECTURE.md`. Agent routing: `CLAUDE.md`.
+
+### The vault image pipeline, unchanged
+
+The commands the vault's skills call still live here and still mean the same thing: `npm run study -- --study <slug>` (every gate, one next action), `npm run beats:ship -- --study <slug>`, `npm run study:ship -- --study <slug>`, `npm run bind-images`, `npm run heroes`, `npm run adopt-pastes`, `npm run upload`, `npm run new-recipient`, and the vault checks (`takes:check`, `meta:check`, `frontmatter:check`, `order:check`, `recipients:check`, `taxonomy:check`). They read the vault at `VAULT_DIR` (default `~/Dev/marliin-vault`) and write only where they always did.

@@ -7,7 +7,7 @@ import { errorText } from './useAsync';
 /** The recipient's own pages, rendered from the admin preview endpoint so a
  *  draft can be checked before it goes live. Nothing is logged as a view. */
 export function RecipientPreview() {
-  const { slug = '', study } = useParams();
+  const { recipient: slug = '', slug: study } = useParams();
   const [data, setData] = useState<RecipientPayload | null>(null);
   const [error, setError] = useState<string | null>(null);
   useEffect(() => { admin.preview(slug).then(setData).catch((e) => setError(e.code ?? String(e))); }, [slug]);
@@ -25,8 +25,8 @@ export function RecipientPreview() {
 }
 
 function PreviewRoutes({ data, slug, study }: { data: RecipientPayload; slug: string; study?: string }) {
-  // The recipient pages read :recipient and :slug from the route. The preview
-  // route carries the same names so the pages work unchanged.
-  void slug;
-  return study ? <RecipientStudy preview={data} /> : <RecipientSpace preview={data} />;
+  // The preview routes carry the same param names as the recipient routes
+  // (:recipient and :slug), and every link inside stays under the preview.
+  const base = `/admin/recipients/${slug}/preview`;
+  return study ? <RecipientStudy preview={data} basePath={base} /> : <RecipientSpace preview={data} basePath={base} />;
 }

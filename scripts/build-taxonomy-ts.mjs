@@ -22,10 +22,12 @@
 import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { homedir } from 'node:os';
+import { resolveVaultDir } from './vault-dir.mjs';
+import { fileURLToPath } from 'node:url';
 
-const VAULT = process.env.VAULT_DIR ?? join(homedir(), 'Dev', 'marliin-vault');
+const VAULT = resolveVaultDir();
 const SRC = join(VAULT, 'taxonomy.json');
-const OUT_SITE = new URL('../src/data/taxonomy.ts', import.meta.url).pathname;
+const OUT_SITE = fileURLToPath(new URL('../src/data/taxonomy.ts', import.meta.url));
 const OUT_VAULT = join(VAULT, 'working/portfolio-worker/taxonomy.generated.ts');
 
 const tx = JSON.parse(readFileSync(SRC, 'utf8'));

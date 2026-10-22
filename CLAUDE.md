@@ -37,5 +37,5 @@ emoji, none of the anti-lexicon, name the credential never the casualty.
 The system is Swiss: a twelve column grid, Archivo on the display and text,
 IBM Plex Mono for the index furniture, white paper, black ink, one signal
 red, hairline rules. Tokens live in `src/styles/tokens.css` and nothing
-else holds a literal colour or size. Press `g` on any public page to see
-the grid. Every animation degrades under `prefers-reduced-motion`.
+else holds a literal colour or size. Shift+Alt+G, or the footer's Grid button, shows
+the grid on any public page. Every animation degrades under `prefers-reduced-motion`.

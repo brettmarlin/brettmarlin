@@ -15,8 +15,8 @@
   --ink-4: #b3b3b3;        /* faint ornament only, never text */
   --rule: #e4e4e1;         /* hairline */
   --rule-2: #0a0a0a;       /* the strong rule: section heads, nav */
-  --signal: #e2231a;       /* the one red; index numerals, live states, focus */
-  --signal-2: #b51b14;     /* hover on red */
+  --signal: #e3000f;       /* the one red, 4.95:1 on paper; index numerals, live states, focus */
+  --signal-2: #b8000c;     /* hover on red */
   --on-signal: #ffffff;
   --scrim: rgba(10, 10, 10, 0.92);
   --focus: var(--signal);
@@ -104,8 +104,8 @@
   --ink-4: #4a4a48;
   --rule: #262626;
   --rule-2: #f3f3f1;
-  --signal: #ff3b30;
-  --signal-2: #ff6b62;
+  --signal: #ff3b3b;
+  --signal-2: #ff6b6b;
   --on-signal: #0b0b0b;
   --scrim: rgba(0, 0, 0, 0.94);
 }

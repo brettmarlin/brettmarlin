@@ -157,10 +157,20 @@ test('edgeColorsFor caches by R2 path, and a cached null is a hit, not a retry',
   assert.equal(fetches, 1, 'null was already the answer; do not fetch again');
 });
 
+test('edgeColorsFor without a converter skips the fetch and leaves the cache alone', async () => {
+  const cache = {};
+  let fetched = 0;
+  const fetcher = async () => { fetched += 1; return { ok: true, arrayBuffer: async () => new ArrayBuffer(0) }; };
+  const r = await edgeColorsFor('https://x.dev/images/s/00-hero.png', { cache, fetcher, canSample: false });
+  assert.deepEqual(r, { colors: null, fromCache: false, skipped: true });
+  assert.equal(fetched, 0);
+  assert.deepEqual(cache, {}, 'a machine that cannot sample must not cache a null');
+});
+
 test('edgeColorsFor surfaces a failed fetch to the caller', async () => {
   const fetcher = async () => ({ ok: false, status: 503 });
   await assert.rejects(
-    () => edgeColorsFor('https://x.dev/images/s/00-hero.png', { cache: {}, fetcher }),
+    () => edgeColorsFor('https://x.dev/images/s/00-hero.png', { cache: {}, fetcher, canSample: true }),
     /HTTP 503/
   );
 });

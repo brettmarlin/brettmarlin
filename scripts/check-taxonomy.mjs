@@ -25,8 +25,9 @@
 import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { homedir } from 'node:os';
+import { resolveVaultDir } from './vault-dir.mjs';
 
-const VAULT = process.env.VAULT_DIR ?? join(homedir(), 'Dev', 'marliin-vault');
+const VAULT = resolveVaultDir();
 const argIdx = process.argv.indexOf('--taxonomy');
 const TAXONOMY = argIdx !== -1 ? process.argv[argIdx + 1] : join(VAULT, 'taxonomy.json');
 const STUDIES = join(VAULT, 'case-studies');

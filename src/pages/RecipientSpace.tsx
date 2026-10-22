@@ -11,6 +11,7 @@ import { fetchRecipient, recipientPasswordKey, session, type RecipientPayload, t
 import { callout, isRecipientSlug, resolvePicks } from '../lib/recipient';
 import { formatDate } from '../lib/dates';
 import { SITE } from '../lib/config';
+import { studies as allStudies } from '../lib/studies';
 import { EASE } from '../lib/motion';
 import { useDocumentTitle, useNoIndex } from '../hooks/useDocumentTitle';
 import { capture } from '../lib/analytics';
@@ -56,7 +57,14 @@ function useRecipient(slug: string, preview?: RecipientPayload) {
       setTimeout(() => setState({ kind: 'ready', data: r.data }), 700);
       return;
     }
-    setState(fromResult(r, 'wrong'));
+    // The Worker's refusals carry no name, so keep the one the challenge gave.
+    setState((s) => {
+      const next = fromResult(r, 'wrong');
+      return next.kind === 'gate' && s.kind === 'gate' ? { ...next, name: next.name || s.name, company: next.company || s.company } : next;
+    });
+    if (r.status === 'rate-limited') {
+      window.setTimeout(() => setState((s) => (s.kind === 'gate' && s.gate === 'limited' ? { ...s, gate: 'idle', retryIn: undefined } : s)), (r.retryIn || 60) * 1000);
+    }
   };
   return { state, submit };
 }
@@ -145,18 +153,18 @@ function Shell({ state, submit, children }: { state: SpaceState; submit: (p: str
   return <SpaceChrome company={state.data.company}>{children(state.data)}</SpaceChrome>;
 }
 
-export function RecipientSpace({ preview }: { preview?: RecipientPayload }) {
+export function RecipientSpace({ preview, basePath }: { preview?: RecipientPayload; basePath?: string }) {
   const { recipient = '' } = useParams();
   const { state, submit } = useRecipient(recipient, preview);
   useDocumentTitle(state.kind === 'ready' ? callout(state.data) : 'Selected work');
   return (
     <Shell state={state} submit={submit}>
-      {(data) => <SpaceHome data={data} slug={recipient} preview={!!preview} />}
+      {(data) => <SpaceHome data={data} base={basePath ?? `/for/${recipient}`} preview={!!preview} />}
     </Shell>
   );
 }
 
-function SpaceHome({ data, slug, preview }: { data: RecipientPayload; slug: string; preview: boolean }) {
+function SpaceHome({ data, base, preview }: { data: RecipientPayload; base: string; preview: boolean }) {
   const picks = useMemo(() => resolvePicks(data), [data]);
   const framings = Object.fromEntries(picks.map((p) => [p.study.slug, p.pick.framing]));
   const studies = picks.map((p) => p.study);
@@ -169,14 +177,14 @@ function SpaceHome({ data, slug, preview }: { data: RecipientPayload; slug: stri
             <span><span className="signal">For</span> {data.recipient_name || data.company}{data.recipient_title ? `, ${data.recipient_title}` : ''}</span>
             <span>{picks.length} {picks.length === 1 ? 'study' : 'studies'}{data.expires ? `, open until ${formatDate(data.expires)}` : ''}{preview ? ', preview' : ''}</span>
           </div>
-          <SplitText as="h1" text={callout(data)} className="t-display-xl space-callout" />
+          <SplitText as="h1" id="space-title" text={callout(data)} className="t-display-xl space-callout" />
           {data.intro ? <p className="t-lead space-intro pretty">{data.intro}</p> : null}
           {data.company_context ? <div className="space-meta"><span className="label muted">Your context</span><span className="t-small secondary measure">{data.company_context}</span></div> : null}
         </section>
         <section className="container space-body" aria-label="Selected studies">
-          <WorkIndex studies={studies} basePath={`/for/${slug}/work`} framings={framings} />
+          <WorkIndex studies={studies} basePath={`${base}/work`} framings={framings} />
           <p className="space-note t-small secondary">
-            Each study opens with a note on why it was chosen for you. The full public portfolio has {21} studies and is one click away, but these are the ones I would walk through with you first.
+            Each study opens with a note on why it was chosen for you. The full public portfolio has {allStudies.length} studies and is one click away, but these are the ones I would walk through with you first.
             {' '}<Link to="/work" className="arrow-link">All work<Arrow className="arrow" /></Link>
           </p>
         </section>
@@ -185,8 +193,9 @@ function SpaceHome({ data, slug, preview }: { data: RecipientPayload; slug: stri
   );
 }
 
-export function RecipientStudy({ preview }: { preview?: RecipientPayload }) {
+export function RecipientStudy({ preview, basePath }: { preview?: RecipientPayload; basePath?: string }) {
   const { recipient = '', slug = '' } = useParams();
+  const base = basePath ?? `/for/${recipient}`;
   const { state, submit } = useRecipient(recipient, preview);
   return (
     <Shell state={state} submit={submit}>
@@ -197,7 +206,7 @@ export function RecipientStudy({ preview }: { preview?: RecipientPayload }) {
           return (
             <div className="container" style={{ paddingTop: 'var(--s-9)' }}>
               <h1 className="t-h1">That study is not part of this selection.</h1>
-              <p style={{ marginTop: 'var(--s-4)' }}><Link to={`/for/${recipient}`} className="arrow-link t-h3">Back to your selection<Arrow className="arrow" /></Link></p>
+              <p style={{ marginTop: 'var(--s-4)' }}><Link to={base} className="arrow-link t-h3">Back to your selection<Arrow className="arrow" /></Link></p>
             </div>
           );
         }
@@ -208,12 +217,12 @@ export function RecipientStudy({ preview }: { preview?: RecipientPayload }) {
           <CaseStudyView
             key={current.study.slug}
             study={current.study}
-            backTo={`/for/${recipient}`}
+            backTo={base}
             backLabel={`Selected work for ${data.company || data.recipient_name || 'you'}`}
             framing={current.pick.framing}
             next={next}
             prev={prev}
-            nextBase={`/for/${recipient}/work`}
+            nextBase={`${base}/work`}
           />
         );
       }}

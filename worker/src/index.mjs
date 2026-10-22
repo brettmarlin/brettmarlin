@@ -49,7 +49,8 @@ export default {
     try {
       return await route(request, url, env, ctx, cors);
     } catch (err) {
-      return json({ error: 'server_error', message: String(err?.message ?? err) }, 500, cors);
+      console.error('worker error', err);
+      return json({ error: 'server_error' }, 500, cors);
     }
   },
 };
@@ -104,7 +105,7 @@ async function recipient(request, slug, env, ctx, cors) {
   if (!record || record.status === 'draft') return json({ error: 'not_found' }, 404, cors);
 
   if (record.status === 'expired' || isExpired(record.expires)) {
-    ctx.waitUntil(logEvent(env, 'recipient_link_expired', slug, request));
+    ctx.waitUntil(logAnonymous(env, 'recipient_link_expired', slug, request));
     return json({ error: 'expired', expires: record.expires ?? null }, 410, cors);
   }
 
@@ -116,17 +117,19 @@ async function recipient(request, slug, env, ctx, cors) {
         recipient_name: record.recipient_name || '', company: record.company || '',
       }, 401, cors);
     }
-    const limited = await rateLimited(env, request);
-    if (limited) return json({ error: 'too_many_attempts', retry_in: RATE_LIMIT.windowSeconds }, 429, cors);
+    if (await attemptLimited(env, request)) return json({ error: 'too_many_attempts', retry_in: RATE_LIMIT.windowSeconds }, 429, cors);
     const ok = await verifyPassword(supplied, record);
     if (!ok) {
-      ctx.waitUntil(Promise.all([logEvent(env, 'recipient_password_failed', slug, request), countFailure(env, request)]));
+      ctx.waitUntil(logEvent(env, 'recipient_password_failed', slug, request));
       return json({ error: 'bad_password' }, 401, cors);
     }
   }
 
-  ctx.waitUntil(logEvent(env, 'recipient_portfolio_viewed', slug, request, { gated: !!record.protected }));
-  return json(publicView(record), 200, cors, { 'cache-control': 'no-store' });
+  ctx.waitUntil(logAnonymous(env, 'recipient_portfolio_viewed', slug, request, { gated: !!record.protected }));
+  // Gated picks that reference an extension by slug are embedded at read
+  // time, so a pick chosen as the named take reaches the reader as the
+  // named take and never as the public one.
+  return json(await withEmbeddedStudies(env, publicView(record)), 200, cors, { 'cache-control': 'no-store' });
 }
 
 // ===========================================================================
@@ -150,8 +153,7 @@ async function studyUnlock(request, publicSlug, env, ctx, cors) {
   const gated = JSON.parse(raw);
   const supplied = await readPassword(request);
   if (supplied === null) return json({ error: 'password_required' }, 401, cors);
-  const limited = await rateLimited(env, request);
-  if (limited) return json({ error: 'too_many_attempts', retry_in: RATE_LIMIT.windowSeconds }, 429, cors);
+  if (await attemptLimited(env, request)) return json({ error: 'too_many_attempts', retry_in: RATE_LIMIT.windowSeconds }, 429, cors);
 
   const candidates = await recipientsGranting(env, publicSlug, gated.slug);
   for (const rec of candidates) {
@@ -160,13 +162,22 @@ async function studyUnlock(request, publicSlug, env, ctx, cors) {
       return json({ ok: true, study: gated.study, via: { company: rec.company || '' } }, 200, cors, { 'cache-control': 'no-store' });
     }
   }
-  ctx.waitUntil(Promise.all([logEvent(env, 'study_password_failed', publicSlug, request), countFailure(env, request)]));
+  ctx.waitUntil(logEvent(env, 'study_password_failed', publicSlug, request));
   return json({ error: 'bad_password' }, 401, cors);
 }
 
+/** A pick grants the gated extension only when it was chosen AS the gated
+ *  take: it carries the embedded study, is flagged gated, names the gated
+ *  take's own slug, or names a recipient-named take. A plain public pick of
+ *  the same study grants nothing: the named version is a separate decision,
+ *  made per recipient, and never a default. */
 export function pickNamesStudy(pick, publicSlug, gatedSlug) {
-  const names = [pick?.case_study, pick?.study?.slug, pick?.slug].filter(Boolean).map((s) => String(s).replace(/^\[\[case-studies\//, '').replace(/\]\]$/, '').replace(/\.md$/, ''));
-  return names.includes(publicSlug) || (gatedSlug && names.includes(gatedSlug));
+  if (!pick) return false;
+  const names = [pick.case_study, pick.study?.slug, pick.slug].filter(Boolean).map((s) => String(s).replace(/^\[\[case-studies\//, '').replace(/\]\]$/, '').replace(/\.md$/, ''));
+  const aboutThisStudy = names.includes(publicSlug) || (!!gatedSlug && names.includes(gatedSlug));
+  if (!aboutThisStudy) return false;
+  const explicitlyGated = pick.gated === true || !!pick.study || pick.take === 'recipient-named' || (!!gatedSlug && names.includes(gatedSlug));
+  return explicitlyGated;
 }
 
 async function recipientsGranting(env, publicSlug, gatedSlug) {
@@ -195,7 +206,7 @@ async function admin(request, url, env, ctx, cors) {
 
   if (p === '/recipients' && method === 'GET') {
     const records = await allRecords(env);
-    const events = await listEvents(env, 2000);
+    const events = await listEvents(env, EVENT_READ_CAP);
     const views = new Map();
     for (const e of events) if (e.event === 'recipient_portfolio_viewed') views.set(e.slug, (views.get(e.slug) ?? 0) + 1);
     const list = records.map((r) => summary(r, views.get(r.slug) ?? 0)).sort((a, b) => (b.updated ?? '').localeCompare(a.updated ?? ''));
@@ -270,13 +281,13 @@ async function admin(request, url, env, ctx, cors) {
   if (p === '/events' && method === 'GET') {
     const slug = url.searchParams.get('slug');
     const limit = Math.min(500, Number(url.searchParams.get('limit') ?? 200));
-    const events = (await listEvents(env, 2000)).filter((e) => !slug || e.slug === slug).slice(0, limit);
+    const events = (await listEvents(env, EVENT_READ_CAP)).filter((e) => !slug || e.slug === slug).slice(0, limit);
     return json({ events }, 200, cors);
   }
 
   if (p === '/stats' && method === 'GET') {
     const records = await allRecords(env);
-    const events = await listEvents(env, 2000);
+    const events = await listEvents(env, EVENT_READ_CAP);
     return json(stats(records, events, Date.now()), 200, cors);
   }
 
@@ -380,7 +391,7 @@ export async function normalizeRecord(slug, body, existing) {
   const hasGatedPick = rec.picks.some((p) => !!p.study || p.gated === true);
   rec.protected = rec.access_mode === 'protected-deep-dive' || hasGatedPick || (body.protected === true) || (!!rec.password_hash && body.protected !== false);
   if (rec.protected && !rec.expires) return { error: 'expires_required_when_protected' };
-  if (rec.expires && !/^\d{4}-\d{2}-\d{2}/.test(String(rec.expires))) return { error: 'bad_expires' };
+  if (rec.expires && (!/^\d{4}-\d{2}-\d{2}/.test(String(rec.expires)) || Number.isNaN(Date.parse(String(rec.expires))))) return { error: 'bad_expires' };
   if (!rec.status) rec.status = existing?.status ?? 'draft';
   rec.created = rec.created ?? now;
   rec.updated = now;
@@ -395,10 +406,25 @@ export function publishProblems(rec) {
   return null;
 }
 
-/** Everything the page renders, and nothing that governs access. */
+/** Exactly the fields the page renders, and nothing that governs access or
+ *  describes the pipeline. An allow-list, so a field added to the record
+ *  later stays private until someone decides otherwise. */
 export function publicView(record) {
-  const { password_hash, password_salt, password, hash, status, notes, password_set, jd, role, ...rest } = record;
-  return rest;
+  const { slug, recipient_name, recipient_title, company, company_context, callout, intro, picks, expires, protected: isProtected } = record;
+  const view = { slug, recipient_name, recipient_title, company, company_context, callout, intro, picks: (picks ?? []).map(publicPick) };
+  if (expires !== undefined) view.expires = expires;
+  view.protected = !!isProtected;
+  return view;
+}
+
+function publicPick(pick) {
+  const { case_study, take, framing, gated, study, demand } = pick ?? {};
+  const out = { case_study, framing: framing ?? '' };
+  if (take) out.take = take;
+  if (gated) out.gated = true;
+  if (study) out.study = study;
+  if (demand) out.demand = demand;
+  return out;
 }
 
 export function adminView(record) {
@@ -545,15 +571,19 @@ function clientIp(request) {
   return request.headers.get('cf-connecting-ip') || request.headers.get('x-forwarded-for')?.split(',')[0].trim() || 'unknown';
 }
 
-async function rateLimited(env, request) {
-  const raw = await env.RECIPIENTS.get(`rl:${clientIp(request)}`);
-  return Number(raw ?? 0) >= RATE_LIMIT.attempts;
-}
-
-async function countFailure(env, request) {
+/** Counts the attempt first, then answers whether this one is over the
+ *  limit, so the count is written before the slow verify rather than after
+ *  it. Every attempt counts, right or wrong: a reader does not try ten
+ *  passwords a minute. KV has no atomic increment, so a burst that lands
+ *  inside one read-write window is undercounted; the control that closes
+ *  that gap is a Cloudflare rate-limiting rule on POST /api/recipient/* and
+ *  POST /api/study/*, which needs no code (consent/clearances.md asks for
+ *  it). This counter is the floor, not the ceiling. */
+async function attemptLimited(env, request) {
   const key = `rl:${clientIp(request)}`;
   const n = Number((await env.RECIPIENTS.get(key)) ?? 0) + 1;
   await env.RECIPIENTS.put(key, String(n), { expirationTtl: RATE_LIMIT.windowSeconds });
+  return n > RATE_LIMIT.attempts;
 }
 
 export function eventKey(now = Date.now(), rand = randomHex(3)) {
@@ -570,19 +600,36 @@ async function logEvent(env, event, slug, request, extra = {}) {
     country: cf.country || null, city: cf.city || null,
     ...extra,
   };
-  await env.RECIPIENTS.put(eventKey(), JSON.stringify(record), { expirationTtl: EVENT_TTL_DAYS * 86_400 });
+  // The record rides in the key's metadata so the admin reads a page of
+  // events from one list() call, with no get per key: anonymous traffic
+  // writes these, so the read side must not grow with it.
+  await env.RECIPIENTS.put(eventKey(), '1', { expirationTtl: EVENT_TTL_DAYS * 86_400, metadata: record });
   await capturePosthog(env, event, slug, record);
 }
 
+/** Anonymous views are written once per reader, slug and ten minutes. A
+ *  reload loop or a bot on a known link cannot grow the event log, or the
+ *  admin's page of it, without bound. Password attempts are already behind
+ *  attemptLimited and are logged every time. */
+export const VIEW_DEDUPE_SECONDS = 600;
+async function logAnonymous(env, event, slug, request, extra = {}) {
+  const key = `seen:${event}:${slug}:${clientIp(request)}`;
+  if (await env.RECIPIENTS.get(key)) return;
+  await env.RECIPIENTS.put(key, '1', { expirationTtl: VIEW_DEDUPE_SECONDS });
+  await logEvent(env, event, slug, request, extra);
+}
+
+export const EVENT_READ_CAP = 1000;
+
 async function listEvents(env, max = 500) {
   const out = [];
+  const cap = Math.min(max, EVENT_READ_CAP);
   let cursor;
   do {
-    const page = await env.RECIPIENTS.list({ prefix: 'event:', cursor, limit: Math.min(1000, max) });
+    const page = await env.RECIPIENTS.list({ prefix: 'event:', cursor, limit: Math.min(1000, cap) });
     for (const k of page.keys) {
-      const raw = await env.RECIPIENTS.get(k.name);
-      if (raw) { try { out.push(JSON.parse(raw)); } catch { /* skip */ } }
-      if (out.length >= max) return out;
+      if (k.metadata && k.metadata.ts) out.push(k.metadata);
+      if (out.length >= cap) return out;
     }
     cursor = page.list_complete ? undefined : page.cursor;
   } while (cursor);

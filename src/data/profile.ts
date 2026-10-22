@@ -13,7 +13,7 @@ export const profile = {
   ],
   bio: [
     'I am a product design leader who has spent twelve years in-house, building and running design organizations at Carta, Mixpanel, Altana, Sayari and Blend, at Head of Design, Director and VP levels. I am a player-coach: I still design personally, in the file, using AI as a load-bearing part of my own workflow, not something I delegate to a team and stop touching myself.',
-    'The last three years were spent leading design for AI-powered intelligence platforms, risk intelligence at Sayari and supply-chain intelligence at Altana, serving Fortune 100 companies, government agencies and financial institutions. Before that, a longer run building and rebuilding design teams from zero: recruiting, coaching people back from performance plans, standing up UX research practices that did not exist yet, and getting design systems built as real code instead of static specs.',
+    'The last three years were spent leading design for intelligence platforms built on AI, risk intelligence at Sayari and supply-chain intelligence at Altana, serving Fortune 100 companies, government agencies and financial institutions. Before that, a longer run building and rebuilding design teams from zero: recruiting, coaching people back from performance plans, standing up UX research practices that did not exist yet, and getting design systems built as real code instead of static specs.',
     'I currently run Marliin, my own practice, where I act as founding design partner to an AI-first defense platform and build my own agentic tooling, including a pipeline where AI agents propose missing design system components as reviewable requests instead of silently inventing them. That is the same discipline I bring to every team I lead: AI does real work, a human stays accountable for the decision.',
     'I started as a photographer and graphic designer at Savannah College of Art and Design, spent a decade running my own creative agency (a product I designed there was acquired by AOL for $40M), and have been building product teams ever since.',
   ],
@@ -46,7 +46,7 @@ export const profile = {
     { institution: 'Savannah College of Art and Design', credentials: 'BFA Graphic Design, BFA Photography, minor in Art History' },
   ],
   proof: [
-    { n: '21', label: 'case studies' },
+    { n: 'studies', label: 'case studies' },
     { n: '5', label: 'design orgs led in-house' },
     { n: '12', label: 'years in-house' },
     { n: '25', label: 'years in practice' },

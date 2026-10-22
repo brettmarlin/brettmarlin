@@ -32,6 +32,7 @@ export function CaseStudy() {
       const remembered = isLocked ? session.get(studyPasswordKey(study.slug)) : null;
       if (remembered) {
         const r = await unlockStudy(study.slug, remembered);
+        if (ctrl.signal.aborted) return;
         if (r.status === 'ok') { setExtension(r.study); setVia(r.via.company); setState('ok'); }
         else session.clear(studyPasswordKey(study.slug));
       }
@@ -49,10 +50,16 @@ export function CaseStudy() {
       session.set(studyPasswordKey(study.slug), password);
       setState('ok');
       setVia(r.via.company);
-      setTimeout(() => setExtension(r.study), 650);
+      setTimeout(() => {
+        setExtension(r.study);
+        requestAnimationFrame(() => document.getElementById('decisions')?.focus({ preventScroll: true }));
+      }, 650);
     } else if (r.status === 'bad-password') setState('wrong');
-    else if (r.status === 'rate-limited') { setRetryIn(r.retryIn); setState('limited'); }
-    else setState('error');
+    else if (r.status === 'rate-limited') {
+      setRetryIn(r.retryIn);
+      setState('limited');
+      window.setTimeout(() => setState((s) => (s === 'limited' ? 'idle' : s)), (r.retryIn || 60) * 1000);
+    } else setState('error');
   };
 
   const gate = locked && !extension ? (
@@ -75,7 +82,7 @@ export function CaseStudy() {
     <>
       {extension ? (
         <div className="container" style={{ paddingTop: 'var(--s-6)' }}>
-          <motion.p className="label" initial={{ opacity: 0 }} animate={{ opacity: 1 }}><span className="dot live" style={{ marginRight: 8 }} />Opened{via ? ` for ${via}` : ""}. The named version is showing.</motion.p>
+          <motion.p className="label" role="status" initial={{ opacity: 0 }} animate={{ opacity: 1 }}><span className="dot live" style={{ marginRight: 8 }} />Opened{via ? ` for ${via}` : ""}. The named version is showing.</motion.p>
         </div>
       ) : null}
       <CaseStudyView

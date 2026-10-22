@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from 'react';
 import { Link, NavLink, useLocation } from 'react-router-dom';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { ThemeToggle } from './ThemeToggle';
@@ -17,6 +17,8 @@ export function Nav() {
   const [open, setOpen] = useState(false);
   const { pathname } = useLocation();
   const reduce = useReducedMotion();
+  const closeRef = useRef<HTMLButtonElement>(null);
+  const menuBtnRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     const on = () => setScrolled(window.scrollY > 8);
@@ -28,8 +30,20 @@ export function Nav() {
   useEffect(() => { setOpen(false); }, [pathname]);
   useEffect(() => {
     document.documentElement.style.overflow = open ? 'hidden' : '';
+    if (open) requestAnimationFrame(() => closeRef.current?.focus());
+    else menuBtnRef.current?.focus({ preventScroll: true });
     return () => { document.documentElement.style.overflow = ''; };
   }, [open]);
+
+  const trapTab = (e: ReactKeyboardEvent<HTMLDivElement>) => {
+    if (e.key !== 'Tab') return;
+    const focusables = e.currentTarget.querySelectorAll<HTMLElement>('a[href], button:not([disabled])');
+    if (!focusables.length) return;
+    const first = focusables[0];
+    const last = focusables[focusables.length - 1];
+    if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+    else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+  };
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpen(false); };
@@ -42,7 +56,7 @@ export function Nav() {
       <a className="skip" href="#main">Skip to content</a>
       <header className={`nav ${scrolled ? 'scrolled' : ''}`}>
         <div className="container nav-inner">
-          <Link to="/" className="wordmark" aria-label="Brett Marlin, home">
+          <Link to="/" className="wordmark">
             <span className="wordmark-name">Brett Marlin</span>
             <span className="wordmark-meta label muted hide-sm">Design leader, {SITE.location}</span>
           </Link>
@@ -55,7 +69,7 @@ export function Nav() {
           </nav>
           <div className="nav-mobile">
             <ThemeToggle />
-            <button type="button" className="menu-btn label" aria-expanded={open} aria-controls="menu" onClick={() => setOpen((v) => !v)}>
+            <button ref={menuBtnRef} type="button" className="menu-btn label" aria-expanded={open} aria-controls="menu" onClick={() => setOpen((v) => !v)}>
               {open ? 'Close' : 'Menu'}
             </button>
           </div>
@@ -69,6 +83,7 @@ export function Nav() {
             role="dialog"
             aria-modal="true"
             aria-label="Navigation"
+            onKeyDown={trapTab}
             initial={reduce ? { opacity: 0 } : { clipPath: 'inset(0 0 100% 0)' }}
             animate={reduce ? { opacity: 1 } : { clipPath: 'inset(0 0 0% 0)' }}
             exit={reduce ? { opacity: 0 } : { clipPath: 'inset(0 0 100% 0)' }}
@@ -77,7 +92,7 @@ export function Nav() {
             <div className="container menu-inner">
               <div className="between">
                 <span className="label muted">Menu</span>
-                <button type="button" className="menu-close" onClick={() => setOpen(false)} aria-label="Close menu"><Close /></button>
+                <button ref={closeRef} type="button" className="menu-close" onClick={() => setOpen(false)} aria-label="Close menu"><Close /></button>
               </div>
               <nav aria-label="Primary, mobile" className="menu-links">
                 {[{ to: '/', label: 'Home' }, ...LINKS].map((l, i) => (

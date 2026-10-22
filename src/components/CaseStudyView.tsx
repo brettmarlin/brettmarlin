@@ -57,11 +57,13 @@ export function CaseStudyView({ study, extension, backTo, backLabel, framing, ne
   const [lightbox, setLightbox] = useState<{ images: LightboxImage[]; index: number; label: string } | null>(null);
   useEffect(() => { setLightbox(null); }, [study.slug]);
 
-  const openLightbox = (beat: Beat, items: Visual[], i: number) => {
-    const images = items.filter((m): m is Extract<Visual, { kind: 'image' }> => m.kind === 'image').map((m) => ({ src: m.src, alt: m.alt, width: m.width, height: m.height }));
+  // The lightbox walks every image in the study in page order, so a reader
+  // who opens the third figure can keep going to the end without closing.
+  const allImages = useMemo(() => beats.flatMap((b, bi) => visuals(b).filter((m): m is Extract<Visual, { kind: 'image' }> => m.kind === 'image').map((m, mi) => ({ src: m.src, alt: `${m.alt} (Fig. ${index(bi)}.${mi + 1})`, width: m.width, height: m.height }))), [beats]);
+  const openLightbox = (_beat: Beat, items: Visual[], i: number) => {
     const target = items[i];
-    const idx = target.kind === 'image' ? images.findIndex((im) => im.src === target.src) : 0;
-    setLightbox({ images, index: Math.max(0, idx), label: beat.heading });
+    const idx = target.kind === 'image' ? allImages.findIndex((im) => im.src === target.src) : 0;
+    setLightbox({ images: allImages, index: Math.max(0, idx), label: shown.title });
   };
 
   const bg = hero?.edgeColors
@@ -77,7 +79,7 @@ export function CaseStudyView({ study, extension, backTo, backLabel, framing, ne
           <span className="hide-sm">{shown.kind === 'experiment' ? 'Marliin Labs' : 'Case study'}{shown.underNda ? ', under NDA' : ''}</span>
           <span>{yearLabel(shown)}</span>
         </div>
-        <SplitText as="h1" text={shown.title} className="t-display cs-title" />
+        <SplitText as="h1" id="cs-title" text={shown.title} className="t-display cs-title" />
         <motion.p className="t-lead cs-outcome pretty" initial={reduce ? false : { opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35, duration: 0.6, ease: EASE }}>{shown.outcome}</motion.p>
         {framing ? (
           <motion.aside className="framing-block" initial={reduce ? false : { opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.45, duration: 0.6, ease: EASE }} aria-label="Why this one, for you">
@@ -108,7 +110,7 @@ export function CaseStudyView({ study, extension, backTo, backLabel, framing, ne
           <ol className="rail-list">
             {sections.map((s) => (
               <li key={s.id}>
-                <a href={`#${s.id}`} className={`rail-item ${s.sub ? 'sub' : ''} ${active === s.id ? 'active' : ''}`} onClick={(e) => { e.preventDefault(); document.getElementById(s.id)?.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' }); }}>
+                <a href={`#${s.id}`} className={`rail-item ${s.sub ? 'sub' : ''} ${active === s.id ? 'active' : ''}`} aria-current={active === s.id ? 'true' : undefined}>
                   <span className="n">{s.n}</span><span>{s.title}</span>
                 </a>
               </li>
@@ -135,8 +137,8 @@ export function CaseStudyView({ study, extension, backTo, backLabel, framing, ne
             </Section>
           ) : null}
 
-          {beats.map((beat) => (
-            <BeatBlock key={beat.id} beat={beat} n={numOf(sections, `beat-${beat.id}`)} onOpen={(items, i) => openLightbox(beat, items, i)} />
+          {beats.map((beat, bi) => (
+            <BeatBlock key={beat.id} beat={beat} n={numOf(sections, `beat-${beat.id}`)} fig={index(bi)} onOpen={(items, i) => openLightbox(beat, items, i)} />
           ))}
 
           <Section id="outcome" n={numOf(sections, 'outcome')} title="Outcome"><Prose text={shown.result} lead /></Section>
@@ -144,6 +146,10 @@ export function CaseStudyView({ study, extension, backTo, backLabel, framing, ne
             <Section id="through-line" n={numOf(sections, 'through-line')} title="Through-line">
               <Reveal className="pull"><Prose text={shown.storyThroughLine} /></Reveal>
             </Section>
+          ) : null}
+
+          {shown.underNda ? (
+            <div className="cs-section nda"><span className="label"><span className="signal">Under NDA</span> <span className="muted">A deeper walkthrough is available on request.</span></span></div>
           ) : null}
 
           {shown.substackUrl ? (
@@ -173,14 +179,14 @@ export function CaseStudyView({ study, extension, backTo, backLabel, framing, ne
 
 function Section({ id, n, title, children }: { id: string; n: string; title: string; children: ReactNode }) {
   return (
-    <Reveal as="section" id={id} className="cs-section" aria-labelledby={`${id}-h`}>
+    <Reveal as="section" id={id} className="cs-section" aria-labelledby={`${id}-h`} tabIndex={-1}>
       <h2 className="cs-section-head label" id={`${id}-h`}><span className="n">{n}</span><span>{title}</span></h2>
       {children}
     </Reveal>
   );
 }
 
-function BeatBlock({ beat, n, onOpen }: { beat: Beat; n: string; onOpen: (items: Visual[], i: number) => void }) {
+function BeatBlock({ beat, n, fig, onOpen }: { beat: Beat; n: string; fig: string; onOpen: (items: Visual[], i: number) => void }) {
   const a = arrange(beat);
   const items = visuals(beat);
   const media = (() => {
@@ -188,19 +194,19 @@ function BeatBlock({ beat, n, onOpen }: { beat: Beat; n: string; onOpen: (items:
     if (a.mode === 'grid') {
       return (
         <div className="media-grid">
-          {a.items.map((m, i) => <MediaItem key={keyOf(m)} m={m} onClick={() => onOpen(items, i)} eager={false} />)}
+          {a.items.map((m, i) => <MediaItem key={keyOf(m)} m={m} fig={`${fig}.${i + 1}`} onClick={() => onOpen(items, i)} eager={false} />)}
         </div>
       );
     }
     return a.rows.map((row, r) => (
       <div key={r} className="media-row" style={{ gridTemplateColumns: columnsFor(row), width: widthFor(row) }}>
-        {row.items.map((m) => <MediaItem key={keyOf(m)} m={m} onClick={() => onOpen(items, items.indexOf(m))} />)}
+        {row.items.map((m) => <MediaItem key={keyOf(m)} m={m} fig={`${fig}.${items.indexOf(m) + 1}`} onClick={() => onOpen(items, items.indexOf(m))} />)}
       </div>
     ));
   })();
   const sideClass = a.mode === 'side' ? `side ${a.side === 'left' ? 'image-left' : 'image-right'}` : '';
   return (
-    <Reveal as="section" id={`beat-${beat.id}`} className={`beat ${sideClass}`} aria-labelledby={`beat-${beat.id}-h`}>
+    <Reveal as="section" id={`beat-${beat.id}`} className={`beat ${sideClass}`} aria-labelledby={`beat-${beat.id}-h`} tabIndex={-1}>
       <h2 className="beat-head" id={`beat-${beat.id}-h`}><span className="n">{n}</span><span className="t-h2">{beat.heading}</span></h2>
       <div className="beat-prose prose"><Prose text={beat.body} /></div>
       {media ? <div className="beat-media">{media}</div> : null}
@@ -208,13 +214,14 @@ function BeatBlock({ beat, n, onOpen }: { beat: Beat; n: string; onOpen: (items:
   );
 }
 
-function MediaItem({ m, onClick, eager = false }: { m: Visual; onClick: () => void; eager?: boolean }) {
+function MediaItem({ m, fig, onClick, eager = false }: { m: Visual; fig: string; onClick: () => void; eager?: boolean }) {
   if (m.kind === 'video') {
     return <VideoFacade m={m} />;
   }
   return (
     <button type="button" className="media-item" onClick={onClick} aria-label={`Open ${m.alt} at full size`}>
       <Picture src={m.src} alt={m.alt} width={m.width} height={m.height} eager={eager} sizes="(max-width: 900px) 100vw, 70vw" />
+      <span className="fig label" aria-hidden="true"><span className="fig-bar" />Fig. {fig}</span>
     </button>
   );
 }

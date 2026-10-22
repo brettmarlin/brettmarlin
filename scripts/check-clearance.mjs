@@ -27,14 +27,27 @@
  *
  *   VAULT_DIR overrides the vault location (default ~/Dev/marliin-vault)
  */
-import { readFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { existsSync, readFileSync } from 'node:fs';
+import { join, relative } from 'node:path';
 import { homedir } from 'node:os';
-import { pathToFileURL } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
+import { resolveVaultDir } from './vault-dir.mjs';
 
-export const VAULT_DIR = process.env.VAULT_DIR ?? join(homedir(), 'Dev', 'marliin-vault');
+export const VAULT_DIR = resolveVaultDir();
 export const CLEARANCES_PATH = join(VAULT_DIR, 'consent', 'clearances.md');
-export const BUNDLE_PATH = new URL('../src/data/caseStudies.ts', import.meta.url).pathname;
+export const BUNDLE_PATH = fileURLToPath(new URL('../src/data/caseStudies.ts', import.meta.url));
+const ROOT = fileURLToPath(new URL('../', import.meta.url));
+
+// Every public text surface the site ships: the generated bundle, the writing
+// index, the hand-written profile, the agent-readable brett.md and the document
+// shell. A name is public or it is not, whichever file carries it.
+export const PUBLIC_TEXT_PATHS = [
+  BUNDLE_PATH,
+  fileURLToPath(new URL('../src/data/substack.ts', import.meta.url)),
+  fileURLToPath(new URL('../src/data/profile.ts', import.meta.url)),
+  fileURLToPath(new URL('../public/brett.md', import.meta.url)),
+  fileURLToPath(new URL('../index.html', import.meta.url)),
+];
 
 // The clearance classes, exactly as defined in clearances.md's class table.
 export const STATUSES = ['public', 'gated', 'internal', 'redacted', 'unreviewed'];
@@ -279,6 +292,30 @@ export function parseAwaitingDecision(md) {
 }
 
 /**
+ * Names in the `## Awaiting decision` prose, as entities with status
+ * `unreviewed`. That section's own rule: nothing in it may appear on a public
+ * surface, so the guard treats a pending name exactly like an unreviewed one.
+ * Each bullet opens with the bold names, comma separated; a leading "the" is an
+ * article, not part of the name. Names the index already carries are skipped,
+ * since the index governs their status.
+ */
+export function awaitingEntities(md, indexed = []) {
+  const body = parseAwaitingDecision(md);
+  if (!body) return [];
+  const known = new Set(indexed.map((e) => e.name.toLowerCase()));
+  const out = [];
+  for (const m of body.matchAll(/^- \*\*([^*]+)\*\*/gm)) {
+    for (const part of m[1].split(',')) {
+      const name = part.replace(/^\s*the\s+/i, '').trim();
+      if (name.length < 3 || known.has(name.toLowerCase())) continue;
+      known.add(name.toLowerCase());
+      out.push({ name, kind: 'awaiting-decision', status: 'unreviewed' });
+    }
+  }
+  return out;
+}
+
+/**
  * Advisory only. Capitalised multi-word sequences in the bundle that match no
  * entity in the index — the backstop for names nobody has recorded. Noisy by
  * design (section labels, method names, ordinary phrases all surface). The guard
@@ -329,11 +366,17 @@ function main() {
     console.log(`clearance guard: skipped, no clearances.md at ${CLEARANCES_PATH} (set VAULT_DIR)`);
     process.exit(0);
   }
-  const bundleText = readFileSync(BUNDLE_PATH, 'utf8');
-  const violations = scanBundle({ bundleText, entities: loaded.index.entities, surface: 'public-grid' });
+  const entities = [...loaded.index.entities, ...awaitingEntities(loaded.md, loaded.index.entities)];
+  const violations = [];
+  for (const path of PUBLIC_TEXT_PATHS) {
+    if (!existsSync(path)) continue;
+    const file = relative(ROOT, path);
+    const text = readFileSync(path, 'utf8');
+    for (const v of scanBundle({ bundleText: text, entities, surface: 'public-grid' })) violations.push({ ...v, file });
+  }
 
   if (violations.length === 0) {
-    console.log('clearance guard: clean, no non-public entity names in the public bundle');
+    console.log(`clearance guard: clean, no non-public or awaiting-decision names on ${PUBLIC_TEXT_PATHS.length} public text surfaces`);
     process.exit(0);
   }
 
@@ -342,14 +385,15 @@ function main() {
   let lastKey = '';
   for (const v of violations) {
     const scope = v.scope ? `, scope: ${v.scope}` : '';
-    const key = `${v.name}|${v.slug}`;
+    const key = `${v.name}|${v.file}|${v.slug}`;
     if (key !== lastKey) {
-      console.error(`  ${v.name} [${v.status}${scope}] in study "${v.slug}":`);
+      const where = v.slug === '(module header)' ? v.file : `${v.file}, study "${v.slug}"`;
+      console.error(`  ${v.name} [${v.status}${scope}] in ${where}:`);
       lastKey = key;
     }
     console.error(`    ${v.snippet}`);
   }
-  console.error('Fix the vault take so the name does not reach public-grid output, then regenerate (npm run generate). Clearance is governed only by consent/clearances.md; if the name is settled there, the index block is incomplete — tell Brett, do not edit clearances.md.');
+  console.error('Fix the vault take (or the hand-written file) so the name does not reach public output, then regenerate (npm run generate). Clearance is governed only by consent/clearances.md; if the name is settled there, the index block is incomplete — tell Brett, do not edit clearances.md.');
   process.exit(1);
 }
 

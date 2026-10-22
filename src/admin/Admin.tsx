@@ -38,8 +38,8 @@ export function Admin() {
           <Route path="recipients" element={<Recipients />} />
           <Route path="recipients/new" element={<RecipientEditor />} />
           <Route path="recipients/:slug" element={<RecipientEditor />} />
-          <Route path="recipients/:slug/preview" element={<RecipientPreview />} />
-          <Route path="recipients/:slug/preview/work/:study" element={<RecipientPreview />} />
+          <Route path="recipients/:recipient/preview" element={<RecipientPreview />} />
+          <Route path="recipients/:recipient/preview/work/:slug" element={<RecipientPreview />} />
           <Route path="events" element={<Events />} />
           <Route path="studies" element={<Studies />} />
           <Route path="gated/:publicSlug" element={<GatedEditor />} />

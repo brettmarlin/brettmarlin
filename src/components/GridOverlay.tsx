@@ -1,17 +1,18 @@
 import { useEffect, useState } from 'react';
 
-/** Press g anywhere (outside a field) to see the twelve columns and the
- *  8px baseline the page is set on. Shift+g is not needed: g toggles. */
+/** Shift+Alt+G anywhere (a chord, so a dictated g never trips it) or the
+ *  footer's Grid button shows the twelve columns and the 8px baseline the
+ *  page is set on. */
 export function GridOverlay() {
   const [on, setOn] = useState(false);
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      const t = e.target as HTMLElement | null;
-      if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT' || t.isContentEditable)) return;
-      if (e.key === 'g' && !e.metaKey && !e.ctrlKey && !e.altKey) setOn((v) => !v);
+      if (e.code === 'KeyG' && e.altKey && e.shiftKey && !e.metaKey && !e.ctrlKey) { e.preventDefault(); setOn((v) => !v); }
     };
+    const onToggle = () => setOn((v) => !v);
     window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
+    window.addEventListener('bm:grid', onToggle);
+    return () => { window.removeEventListener('keydown', onKey); window.removeEventListener('bm:grid', onToggle); };
   }, []);
   if (!on) return null;
   return (

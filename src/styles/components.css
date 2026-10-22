@@ -121,7 +121,7 @@
 .footer-col { display: grid; gap: var(--s-2); align-content: start; font-size: var(--fs-small); }
 .footer-col a:hover { color: var(--signal); }
 .footer-bottom { display: flex; justify-content: space-between; gap: var(--s-4); padding-top: var(--s-4); border-top: var(--hairline) solid var(--rule); }
-.footer-admin { color: var(--ink-3); }
+.footer-admin { color: var(--ink-3); font: inherit; letter-spacing: inherit; text-transform: inherit; }
 .footer-admin:hover { color: var(--ink); }
 @media (max-width: 720px) { .footer-grid { grid-template-columns: 1fr 1fr; } }
 
@@ -200,7 +200,12 @@
 .beat.side .beat-media .frame img { height: 100%; width: 100%; }
 @media (max-width: 720px) { .beat.side { grid-template-columns: 1fr; } .beat.side .beat-media .frame { max-height: none; width: 100%; } }
 .media-row { display: grid; gap: var(--gutter); }
-.media-item { cursor: zoom-in; }
+.media-item { cursor: zoom-in; display: grid; gap: var(--s-2); text-align: left; width: 100%; }
+.fig { color: var(--ink-3); display: inline-flex; align-items: center; gap: var(--s-2); transition: color var(--d-fast) linear; }
+.fig-bar { width: 0; height: 10px; background: var(--signal); transition: width var(--d-fast) linear; }
+.media-item:hover .fig, .media-item:focus-visible .fig { color: var(--ink); }
+.media-item:hover .fig-bar, .media-item:focus-visible .fig-bar { width: 2px; }
+.nda { gap: 0; }
 .media-item .frame { transition: transform var(--d) var(--ease); }
 .media-item:hover .frame { transform: translateY(-2px); }
 .media-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--gutter); }
@@ -246,7 +251,7 @@
 .lightbox-nav { display: inline-flex; gap: var(--s-2); }
 .lightbox-nav button { color: #fff; display: inline-grid; place-items: center; width: 40px; height: 40px; border: 1px solid rgba(255, 255, 255, 0.3); }
 .lightbox-nav button:hover { border-color: #fff; }
-.lightbox-nav button[disabled] { opacity: 0.3; }
+.lightbox-nav button[aria-disabled='true'] { opacity: 0.3; }
 
 /* ============================================================ recipient */
 .space { padding-top: var(--nav-h); }
@@ -284,7 +289,7 @@
 .pill { display: inline-flex; align-items: center; gap: 6px; font-family: var(--font-mono); font-size: var(--fs-label); letter-spacing: 0.06em; text-transform: uppercase; padding: 3px 8px; border: var(--hairline) solid var(--rule); }
 .pill.live { border-color: var(--signal); color: var(--signal); }
 .pill.draft { color: var(--ink-3); }
-.pill.expired { color: var(--ink-4); text-decoration: line-through; }
+.pill.expired { color: var(--ink-3); text-decoration: line-through; }
 .form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s-5) var(--gutter); }
 .form-grid .span { grid-column: 1 / -1; }
 @media (max-width: 900px) { .form-grid, .two-col { grid-template-columns: 1fr; } .admin { grid-template-columns: 1fr; } .admin-rail { position: static; height: auto; border-right: 0; border-bottom: var(--hairline) solid var(--rule); } }
@@ -303,6 +308,15 @@
 .ev-viewed { color: var(--signal); }
 .code { font-family: var(--font-mono); font-size: var(--fs-mono); background: var(--paper-2); padding: var(--s-4); overflow: auto; white-space: pre; max-height: 480px; }
 .inline-actions { display: flex; gap: var(--s-2); flex-wrap: wrap; }
+
+/* Hover motion stands still under reduced motion; colour still answers. */
+@media (prefers-reduced-motion: reduce) {
+  .index-row::before, .index-title, .index-arrow, .post-title, .theme-toggle, .media-item .frame, .arrow-link .arrow,
+  .work-card .frame img, .cs-next .frame img, .btn, .nav-link::after { transition: none !important; }
+  .index-row:hover .index-title, .post-row:hover .post-title, .index-row:hover .index-arrow, .theme-toggle:hover, .media-item:hover .frame,
+  .arrow-link:hover .arrow, .work-card:hover .frame img, .cs-next:hover .frame img, .btn:active { transform: none !important; }
+  .index-row::before { transition: none !important; }
+}
 
 /* ============================================================= not found */
 .nf { padding: var(--s-10) 0; display: grid; gap: var(--s-6); }

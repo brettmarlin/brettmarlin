@@ -18,8 +18,9 @@
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { homedir } from 'node:os';
+import { resolveVaultDir } from './vault-dir.mjs';
 
-export const VAULT_DIR = process.env.VAULT_DIR ?? join(homedir(), 'Dev', 'marliin-vault');
+export const VAULT_DIR = resolveVaultDir();
 
 /** `false` when the vault is here, or the reason string node:test prints when
  *  it is not. Shaped for `test(name, { skip: skipWithoutVault }, fn)`. */

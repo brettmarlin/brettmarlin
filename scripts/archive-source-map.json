@@ -1,0 +1,53 @@
+{
+  "_comment": "Evidence-recovered mapping of archive sources to vault target filenames, for rows where the Squarespace basename (image-asset.*) carries no identity. Derived from raw-json page order plus data-image-dimensions, verified bijectively per page; see working/DECISIONS-ungated-run.md D36. prepare-images consults this before stem matching. Target -> source, per study slug.",
+  "comcast-seeit-mobile-strategy": {
+    "00-comcast-seeit-hero.jpg": "image-asset-6.png",
+    "03-comcast-solution-exploration-1.jpg": "image-asset.png",
+    "04-comcast-solution-exploration-2.jpg": "image-asset.jpeg",
+    "06-comcast-solution-validation-1.jpg": "image-asset-5.jpeg",
+    "07-comcast-solution-validation-2.jpg": "image-asset-2.png",
+    "08-comcast-solution-validation-3.jpg": "image-asset-7.png",
+    "09-comcast-solution-validation-4.jpg": "image-asset-3.png"
+  },
+  "expo-fundraising-prototype-sprint": {
+    "00-expo-hero.jpg": "image-asset.png",
+    "02-expo-five-days-1.jpg": "image-asset.jpeg",
+    "03-expo-five-days-2.jpg": "image-asset-4.png",
+    "05-expo-prototype-1.jpg": "image-asset-10.png",
+    "06-expo-prototype-2.jpg": "image-asset-9.png",
+    "07-expo-prototype-3.jpg": "image-asset-5.png"
+  },
+  "overdog-android-redesign": {
+    "00-overdog-hero.jpg": "image-asset.png",
+    "02-overdog-mobile-screen-flow.jpg": "image-asset.jpeg",
+    "03-overdog-enter-challenge.jpg": "image-asset-2.png",
+    "04-overdog-account-settings.jpg": "image-asset-4.png",
+    "05-overdog-friending-players.jpg": "image-asset-3.png"
+  },
+  "telmate-cross-device-ux-unification": {
+    "02-telmate-site-flows-audit.jpg": "image-asset-13.png",
+    "04-telmate-mygettingout-ia-wire-options.jpg": "image-asset-14.png"
+  },
+  "youscience-marketing-launch-campaign": {
+    "00-ysmarketing-hero.jpg": "image-asset.png",
+    "03-ysmarketing-campaign-1.jpg": "image-asset-6.png",
+    "04-ysmarketing-campaign-2.jpg": "image-asset.jpeg",
+    "05-ysmarketing-campaign-3.jpg": "IMG_9844.jpg",
+    "06-ysmarketing-campaign-4.jpg": "image-asset-8.jpeg",
+    "07-ysmarketing-commerce-pricing-1.jpg": "image-asset-4.png",
+    "08-ysmarketing-commerce-pricing-2.jpg": "image-asset-5.png",
+    "09-ysmarketing-commerce-pricing-3.jpg": "image-asset-3.png",
+    "10-ysmarketing-commerce-pricing-4.jpg": "image-asset-9.jpeg"
+  },
+  "youscience-results-platform-redesign": {
+    "00-ysproduct-hero.jpg": "image-asset-11.png",
+    "03-ysproduct-the-problem.jpg": "image-asset.jpeg",
+    "04-ysproduct-research-sprint.jpg": "image-asset-3.png",
+    "06-ysproduct-what-did-not-work.jpg": "image-asset-4.png",
+    "07-ysproduct-profile-mandala-circles.jpg": "image-asset-6.png",
+    "08-ysproduct-profile-aptitude-cubes.jpg": "image-asset-7.png",
+    "09-ysproduct-solution-1.jpg": "image-asset-8.png",
+    "10-ysproduct-mandala-early-iteration.jpg": "image-asset-5.png",
+    "12-ysproduct-solution-2.jpg": "image-asset.png"
+  }
+}

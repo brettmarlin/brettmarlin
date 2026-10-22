@@ -107,6 +107,8 @@ export function averageEdgeColor(bmp, side, edgeCols = 3) {
   return `#${hex(r)}${hex(g)}${hex(b)}`;
 }
 
+export const SIPS_AVAILABLE = process.platform === 'darwin';
+
 function sipsToBmp(bytes) {
   const dir = mkdtempSync(join(tmpdir(), 'hero-edge-'));
   try {
@@ -147,9 +149,13 @@ export function sampleEdgeColors(bytes, { convert = sipsToBmp } = {}) {
 // Same contract as dimensionsFor: committed-cache first, keyed by the R2
 // path, fetch only on a miss. Null IS a cache value — "tried, could not
 // sample" — so a bad hero is not re-fetched on every generate.
-export async function edgeColorsFor(url, { cache, fetcher = fetch, sampler = sampleEdgeColors }) {
+export async function edgeColorsFor(url, { cache, fetcher = fetch, sampler = sampleEdgeColors, canSample = sampler !== sampleEdgeColors || SIPS_AVAILABLE }) {
   const key = decodeURIComponent(new URL(url).pathname).replace(/^\/images\//, '');
   if (key in cache) return { colors: cache[key], fromCache: true };
+  // No converter on this machine (sips is macOS only): nothing is sampled
+  // and nothing is cached, so the next generate on a Mac fills the entry.
+  // Caching the null here would freeze "could not sample" into the repo.
+  if (!canSample) return { colors: null, fromCache: false, skipped: true };
   const res = await fetcher(url);
   if (!res.ok) throw new Error(`HTTP ${res.status} fetching ${url}`);
   const colors = sampler(Buffer.from(await res.arrayBuffer()));

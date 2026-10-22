@@ -40,10 +40,19 @@ export function Lightbox({ images, index, onClose, onIndex, label }: {
     onIndex(next);
   };
 
+  // Escape and the arrows work wherever focus went, the image included.
+  useEffect(() => {
+    if (!open) return;
+    const onWindowKey = (e: globalThis.KeyboardEvent) => {
+      if (e.key === 'Escape') { e.preventDefault(); onClose(); }
+      if (e.key === 'ArrowRight') { e.preventDefault(); go(1); }
+      if (e.key === 'ArrowLeft') { e.preventDefault(); go(-1); }
+    };
+    window.addEventListener('keydown', onWindowKey);
+    return () => window.removeEventListener('keydown', onWindowKey);
+  }); // eslint-disable-line react-hooks/exhaustive-deps
+
   const onKey = (e: KeyboardEvent<HTMLDivElement>) => {
-    if (e.key === 'Escape') { e.preventDefault(); onClose(); }
-    if (e.key === 'ArrowRight') { e.preventDefault(); go(1); }
-    if (e.key === 'ArrowLeft') { e.preventDefault(); go(-1); }
     if (e.key === 'Tab') {
       const focusables = (e.currentTarget.querySelectorAll('button:not([disabled])') as NodeListOf<HTMLElement>);
       if (!focusables.length) return;
@@ -91,8 +100,8 @@ export function Lightbox({ images, index, onClose, onIndex, label }: {
           <div className="lightbox-foot">
             <span className="mono">{index + 1} / {images.length}</span>
             <div className="lightbox-nav">
-              <button type="button" onClick={() => go(-1)} disabled={index === 0} aria-label="Previous image"><ArrowLeft /></button>
-              <button type="button" onClick={() => go(1)} disabled={index === images.length - 1} aria-label="Next image"><Arrow /></button>
+              <button type="button" onClick={() => go(-1)} aria-disabled={index === 0} aria-label="Previous image"><ArrowLeft /></button>
+              <button type="button" onClick={() => go(1)} aria-disabled={index === images.length - 1} aria-label="Next image"><Arrow /></button>
             </div>
           </div>
         </motion.div>

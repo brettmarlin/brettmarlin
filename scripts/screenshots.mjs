@@ -54,7 +54,7 @@ const shots = [
   { name: 'menu', path: '/', full: false, setup: async (p) => { const btn = p.getByRole('button', { name: /Menu/ }); if (await btn.isVisible()) { await btn.click(); await p.waitForTimeout(800); } } },
   { name: 'study-dark', path: '/work/sayari-design-org-turnaround', theme: 'dark', full: false, setup: async (p) => { await p.locator('#decisions').scrollIntoViewIfNeeded(); await p.waitForTimeout(600); } },
   { name: 'work-list', path: '/work' },
-  { name: 'work-grid', path: '/work', setup: async (p) => { await p.getByRole('button', { name: /Grid/ }).click(); await p.waitForTimeout(400); } },
+  { name: 'work-grid', path: '/work', setup: async (p) => { await p.getByRole('group', { name: 'View' }).getByRole('button', { name: 'Grid' }).click(); await p.waitForTimeout(400); } },
   { name: 'work-years', path: '/work', setup: async (p) => { await p.getByRole('button', { name: /Years/ }).click(); await p.waitForTimeout(400); } },
   { name: 'work-tag', path: '/work/tag/design-systems' },
   { name: 'study-maf', path: '/work/maf-machine-ai-endurance-coach' },

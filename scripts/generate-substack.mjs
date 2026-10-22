@@ -21,10 +21,10 @@
  * `npm run verify` gains no new network dependency from any of this.
  */
 import { readFileSync, writeFileSync, existsSync } from 'node:fs';
-import { pathToFileURL } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const FEED = process.env.SUBSTACK_FEED ?? 'https://brettmarlin.substack.com/feed';
-const OUT = new URL('../src/data/substack.ts', import.meta.url).pathname;
+const OUT = fileURLToPath(new URL('../src/data/substack.ts', import.meta.url));
 const SNIPPET_MAX = 220;
 
 /** CDATA is Substack's default wrapper for title and description; a feed that

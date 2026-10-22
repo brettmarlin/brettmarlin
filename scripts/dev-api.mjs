@@ -12,33 +12,36 @@ import { createServer } from 'node:http';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import worker from '../worker/src/index.mjs';
+import { fileURLToPath } from 'node:url';
 
 const PORT = Number(process.env.DEV_API_PORT ?? 8787);
-const DIR = new URL('../.dev/', import.meta.url).pathname;
+const DIR = fileURLToPath(new URL('../.dev/', import.meta.url));
 const FILE = join(DIR, 'kv.json');
 const ADMIN_TOKEN = process.env.ADMIN_TOKEN ?? 'dev-admin-token';
 
 function memoryKV(file) {
   const store = new Map();
   const expiry = new Map();
+  const meta = new Map();
   if (existsSync(file)) {
     try {
       const saved = JSON.parse(readFileSync(file, 'utf8'));
       for (const [k, v] of Object.entries(saved.store ?? {})) store.set(k, v);
       for (const [k, v] of Object.entries(saved.expiry ?? {})) expiry.set(k, v);
+      for (const [k, v] of Object.entries(saved.meta ?? {})) meta.set(k, v);
     } catch { /* fresh */ }
   }
   const persist = () => {
     mkdirSync(DIR, { recursive: true });
-    writeFileSync(file, JSON.stringify({ store: Object.fromEntries(store), expiry: Object.fromEntries(expiry) }, null, 1));
+    writeFileSync(file, JSON.stringify({ store: Object.fromEntries(store), expiry: Object.fromEntries(expiry), meta: Object.fromEntries(meta) }, null, 1));
   };
   const alive = (k) => { const e = expiry.get(k); if (e && Date.now() > e) { store.delete(k); expiry.delete(k); return false; } return store.has(k); };
   return {
     async get(k) { return alive(k) ? store.get(k) : null; },
-    async put(k, v, opts = {}) { store.set(k, v); if (opts.expirationTtl) expiry.set(k, Date.now() + opts.expirationTtl * 1000); else expiry.delete(k); persist(); },
-    async delete(k) { store.delete(k); expiry.delete(k); persist(); },
+    async put(k, v, opts = {}) { store.set(k, v); if (opts.expirationTtl) expiry.set(k, Date.now() + opts.expirationTtl * 1000); else expiry.delete(k); if (opts.metadata) meta.set(k, opts.metadata); else meta.delete(k); persist(); },
+    async delete(k) { store.delete(k); expiry.delete(k); meta.delete(k); persist(); },
     async list({ prefix = '', limit = 1000 } = {}) {
-      const keys = [...store.keys()].filter((k) => alive(k) && k.startsWith(prefix)).sort().slice(0, limit).map((name) => ({ name }));
+      const keys = [...store.keys()].filter((k) => alive(k) && k.startsWith(prefix)).sort().slice(0, limit).map((name) => ({ name, metadata: meta.get(name) }));
       return { keys, list_complete: true };
     },
   };

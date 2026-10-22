@@ -34,8 +34,10 @@ import { homedir } from 'node:os';
 import { parseTake, buildStudy, parseBeats, slugifyBeatId, draftMediaForBeat } from './vault-reader.mjs';
 import { resolveBeatMedia, resolveExplicitHero, dimensionsFor } from './generate-case-studies.mjs';
 import { edgeColorsFor } from './hero-edge-color.mjs';
+import { resolveVaultDir } from './vault-dir.mjs';
+import { fileURLToPath } from 'node:url';
 
-const VAULT_DIR = process.env.VAULT_DIR ?? join(homedir(), 'Dev', 'marliin-vault');
+const VAULT_DIR = resolveVaultDir();
 const CASE_DIR = join(VAULT_DIR, 'case-studies');
 const WORKER_BASE = 'https://marliin-recipient-worker.brett-6a3.workers.dev';
 
@@ -125,7 +127,7 @@ if (found.sections['Beats']) {
   // The committed dimensions cache, read only: this is an authoring-time
   // script and must not churn a file the public generator owns. A miss
   // fetches header bytes live instead.
-  const dimensionsPath = new URL('../src/data/image-dimensions.json', import.meta.url).pathname;
+  const dimensionsPath = fileURLToPath(new URL('../src/data/image-dimensions.json', import.meta.url));
   const dimensionsCache = existsSync(dimensionsPath) ? JSON.parse(readFileSync(dimensionsPath, 'utf8')) : {};
   for (const beat of beats) {
     for (const m of beat.media) {
@@ -152,12 +154,12 @@ if (found.sections['Beats']) {
 if (found.heroName) {
   try {
     found.study.hero = resolveExplicitHero(found.study.slug, found.heroName, found.study.title, found.study.images);
-    const dimensionsPath = new URL('../src/data/image-dimensions.json', import.meta.url).pathname;
+    const dimensionsPath = fileURLToPath(new URL('../src/data/image-dimensions.json', import.meta.url));
     const dimensionsCache = existsSync(dimensionsPath) ? JSON.parse(readFileSync(dimensionsPath, 'utf8')) : {};
     const { width, height } = await dimensionsFor(found.study.hero.src, { cache: dimensionsCache });
     found.study.hero.width = width;
     found.study.hero.height = height;
-    const edgePath = new URL('../src/data/hero-edge-colors.json', import.meta.url).pathname;
+    const edgePath = fileURLToPath(new URL('../src/data/hero-edge-colors.json', import.meta.url));
     const edgeCache = existsSync(edgePath) ? JSON.parse(readFileSync(edgePath, 'utf8')) : {};
     const { colors } = await edgeColorsFor(found.study.hero.src, { cache: edgeCache });
     if (colors) found.study.hero.edgeColors = colors;
