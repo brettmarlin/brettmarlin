@@ -53,7 +53,7 @@ export function Work() {
         <div>
           {groupByYear(list).map((g) => (
             <div key={g.year} className="year-group">
-              <span className="t-display">{g.year}</span>
+              <span className="year">{g.year}</span>
               <WorkIndex studies={g.studies} numbered={false} />
             </div>
           ))}

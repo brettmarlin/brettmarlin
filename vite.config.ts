@@ -68,9 +68,11 @@ export default defineConfig({
     sourcemap: false,
     rollupOptions: {
       output: {
-        manualChunks: {
-          vendor: ['react', 'react-dom', 'react-router-dom'],
-          motion: ['motion'],
+        manualChunks(id) {
+          if (id.includes('/src/data/caseStudies')) return 'studies';
+          if (id.includes('node_modules/motion') || id.includes('node_modules/framer-motion')) return 'motion';
+          if (id.includes('node_modules/react') || id.includes('node_modules/scheduler') || id.includes('node_modules/@remix-run')) return 'vendor';
+          return undefined;
         },
       },
     },

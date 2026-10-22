@@ -151,8 +151,8 @@
 .work-card:hover .work-card-title { color: var(--signal); }
 .work-card-bg { padding: 8%; }
 @media (max-width: 900px) { .work-card, .work-card:nth-child(n) { grid-column: span 12; } }
-.year-group { display: grid; grid-template-columns: 120px 1fr; gap: var(--gutter); padding-top: var(--s-5); border-top: var(--strong) solid var(--rule-2); margin-bottom: var(--s-8); }
-.year-group .t-display { line-height: 1; }
+.year-group { display: grid; grid-template-columns: minmax(140px, auto) minmax(0, 1fr); gap: var(--gutter); padding-top: var(--s-5); border-top: var(--strong) solid var(--rule-2); margin-bottom: var(--s-8); }
+.year-group .year { font-family: var(--font-display); font-size: var(--fs-h1); line-height: 1; letter-spacing: var(--ls-h1); font-weight: var(--w-display); font-variant-numeric: tabular-nums; }
 @media (max-width: 720px) { .year-group { grid-template-columns: 1fr; } }
 
 /* ============================================================ case study */

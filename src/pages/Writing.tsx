@@ -17,7 +17,7 @@ export function Writing() {
       </header>
       {years.map((y) => (
         <div key={y} className="year-group">
-          <span className="t-display">{y}</span>
+          <span className="year">{y}</span>
           <ol className="posts">
             {substackPosts.filter((p) => yearOf(p.publishedAt) === y).map((p, i) => (
               <Reveal as="li" key={p.url} delay={i * 40}>

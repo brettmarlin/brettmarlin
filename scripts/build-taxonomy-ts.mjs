@@ -49,7 +49,6 @@ const lines = [
   'export type TagMeta = {',
   '  label: string;',
   '  axis: TaxonomyAxis;',
-  '  definition: string;',
   "  business: 'brett-marlin' | 'marliin' | 'both';",
   '};',
   '',
@@ -59,7 +58,9 @@ for (const axis of axes) {
   lines.push(`  // --- ${axis} ---`);
   for (const v of tx.axes[axis].values) {
     lines.push(
-      `  '${esc(v.id)}': { label: '${esc(v.label)}', axis: '${axis}', business: '${v.business}', definition: '${esc(v.definition)}' },`
+      // Definitions stay in the vault: they are prose about the work and can
+      // name a client the public bundle may not (the dist guard caught one).
+      `  '${esc(v.id)}': { label: '${esc(v.label)}', axis: '${axis}', business: '${v.business}' },`
     );
   }
 }
@@ -111,6 +112,8 @@ if (process.argv.includes('--check')) {
   console.log('taxonomy: src/data/taxonomy.ts is up to date');
 } else {
   writeFileSync(OUT_SITE, text);
-  writeFileSync(OUT_VAULT, text);
+  // OUT_VAULT is the previous site's copy and keeps its own shape; this
+  // generator writes only here.
+  void OUT_VAULT;
   console.log(`taxonomy: wrote ${Object.values(tx.axes).reduce((n, a) => n + a.values.length, 0)} tags across ${axes.length} axes (v${tx.version})`);
 }
