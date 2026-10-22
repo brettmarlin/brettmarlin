@@ -5,6 +5,8 @@
  */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { relative } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import {
   parseIndex,
   scanBundle,
@@ -210,6 +212,8 @@ test('awaitingEntities is empty when the section is absent', () => {
 });
 
 test('the guard scans every hand-written public text surface, not only the bundle', () => {
-  const tails = PUBLIC_TEXT_PATHS.map((p) => p.split('/').slice(-2).join('/'));
-  assert.deepEqual(tails, ['data/caseStudies.ts', 'data/substack.ts', 'data/profile.ts', 'public/brett.md', 'brett-marlin-portfolio/index.html']);
+  // Relative to the repo root, so the checkout's folder name (which CI
+  // capitalises differently) plays no part.
+  const root = fileURLToPath(new URL('../', import.meta.url));
+  assert.deepEqual(PUBLIC_TEXT_PATHS.map((p) => relative(root, p)), ['src/data/caseStudies.ts', 'src/data/substack.ts', 'src/data/profile.ts', 'public/brett.md', 'index.html']);
 });
